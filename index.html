@@ -1,12 +1,43 @@
-
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0608">
 <title>LootQuest ⚔️</title>
+<link rel="manifest" href="data:application/json,{}">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCjnQp7oG33hCeCnJo8v_Mn2cYmCptFyJM",
+    authDomain: "aerlootquest.firebaseapp.com",
+    databaseURL: "https://aerlootquest-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "aerlootquest",
+    storageBucket: "aerlootquest.firebasestorage.app",
+    messagingSenderId: "504696881234",
+    appId: "1:504696881234:web:32b122a3cee64dfb949f8b"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // Expose DB helpers — no Firebase Auth needed
+  window._fbDb  = db;
+  window._fbRef = ref;
+  window._fbSet = set;
+  window._fbGet = get;
+
+  // Signal Firebase is ready
+  if(window._onFirebaseReady) window._onFirebaseReady();
+  else window._firebaseReady = true;
+</script>
 <style>
   :root {
     --gold: #f0c040; --gold-dark: #c89a10;
@@ -330,7 +361,83 @@
   .deal-refresh-btn:hover { border-color:var(--gold); color:var(--gold); }
   .my-deals-list { max-height:250px; overflow-y:auto; }
 
-  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  /* BOSS RAID */
+  @keyframes boss-pulse { 0%,100%{box-shadow:0 0 15px #ff330040,inset 0 0 15px #ff330015} 50%{box-shadow:0 0 40px #ff330080,inset 0 0 30px #ff330030} }
+  @keyframes hp-drain { from{width:var(--hp-from)} to{width:var(--hp-to)} }
+  .boss-card { background:linear-gradient(135deg,#1a0508,#2a0a10); border:2px solid #ff333360; border-radius:14px; padding:20px; margin-bottom:14px; animation:boss-pulse 2.5s ease-in-out infinite; }
+  .boss-header { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+  .boss-emoji { font-size:3.5rem; }
+  .boss-info { flex:1; }
+  .boss-name { font-family:'Cinzel Decorative',serif; font-size:1.1rem; color:#ff6666; }
+  .boss-tier { font-size:0.7rem; letter-spacing:2px; text-transform:uppercase; color:#ff4444; margin-top:2px; }
+  .boss-hp-bar { background:#1a0000; border-radius:6px; height:14px; overflow:hidden; margin:8px 0; border:1px solid #ff333340; }
+  .boss-hp-fill { height:100%; background:linear-gradient(90deg,#ff0000,#ff6600); border-radius:6px; transition:width 0.5s; }
+  .boss-stats { display:flex; gap:12px; font-size:0.8rem; color:var(--text-dim); }
+  .boss-rewards { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  .boss-reward-tag { background:#ff330015; border:1px solid #ff333340; border-radius:6px; padding:3px 10px; font-size:0.75rem; color:#ff8888; }
+  .boss-attack-btn { width:100%; padding:10px; background:linear-gradient(135deg,#4a0000,#8a0000); border:1px solid #ff333360; border-radius:8px; color:#ff8888; font-family:'Cinzel Decorative',serif; font-size:0.85rem; cursor:pointer; transition:all 0.2s; }
+  .boss-attack-btn:hover:not(:disabled) { background:linear-gradient(135deg,#7a0000,#bb0000); transform:translateY(-1px); }
+  .boss-attack-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .boss-dead { opacity:0.4; filter:grayscale(1); }
+  .boss-section-title { font-family:'Cinzel Decorative',serif; font-size:0.85rem; color:#ff6666; letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; border-bottom:1px solid #ff333330; padding-bottom:8px; }
+
+  /* RELICS */
+  .relic-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
+  .relic-card { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; position:relative; transition:all 0.2s; }
+  .relic-card.owned { border-color:#f0c04060; background:linear-gradient(135deg,#1a1200,#2a1800); }
+  .relic-card.equipped { border-color:var(--gold); box-shadow:0 0 14px #f0c04030; }
+  .relic-emoji { font-size:2.2rem; display:block; margin-bottom:6px; }
+  .relic-name { font-size:0.85rem; font-weight:700; margin-bottom:4px; }
+  .relic-effect { font-size:0.72rem; color:var(--text-dim); line-height:1.4; margin-bottom:8px; }
+  .relic-cost { font-size:0.78rem; color:#ff9a3c; }
+  .relic-equip-btn { padding:4px 12px; background:linear-gradient(135deg,var(--gold-dark),var(--gold)); border:none; border-radius:6px; color:#1a0800; font-weight:700; font-size:0.75rem; cursor:pointer; font-family:'Crimson Pro',serif; }
+  .relic-owned-badge { position:absolute; top:6px; right:6px; background:#f0c04020; border:1px solid #f0c04040; color:var(--gold); border-radius:4px; padding:1px 6px; font-size:0.6rem; }
+  .relic-slots { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .relic-slot { width:54px; height:54px; background:var(--bg3); border:2px dashed var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; transition:all 0.2s; position:relative; }
+  .relic-slot.filled { border-style:solid; border-color:var(--gold-dark); background:#1a1200; }
+  .relic-slot:hover { border-color:var(--gold); }
+
+  /* ACHIEVEMENTS */
+  .ach-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+  .ach-card { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:14px; display:flex; gap:12px; align-items:flex-start; transition:all 0.2s; }
+  .ach-card.unlocked { border-color:#f0c04050; background:linear-gradient(135deg,#1a1200,#2a1800); }
+  .ach-card.locked { opacity:0.5; filter:grayscale(0.5); }
+  .ach-emoji { font-size:2rem; flex-shrink:0; }
+  .ach-info { flex:1; }
+  .ach-name { font-weight:700; font-size:0.88rem; margin-bottom:3px; }
+  .ach-desc { font-size:0.72rem; color:var(--text-dim); margin-bottom:5px; line-height:1.3; }
+  .ach-prog { font-size:0.68rem; color:var(--gold); }
+  .ach-unlocked-badge { font-size:0.65rem; background:#f0c04020; border:1px solid #f0c04040; color:var(--gold); border-radius:20px; padding:1px 8px; display:inline-block; margin-top:4px; }
+
+  /* AUTO-EXPLORE */
+  .auto-card { background:var(--bg3); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .auto-card.running { border-color:#44dd8860; background:linear-gradient(135deg,#0a1a0a,#0a2010); }
+  .auto-toggle { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .auto-label { font-family:'Cinzel Decorative',serif; font-size:0.85rem; color:var(--gold); letter-spacing:1px; }
+  .toggle-switch { width:48px; height:26px; background:#333; border-radius:13px; cursor:pointer; position:relative; transition:background 0.3s; border:1px solid var(--border); }
+  .toggle-switch.on { background:#44dd8840; border-color:#44dd8860; }
+  .toggle-switch::after { content:''; position:absolute; width:20px; height:20px; background:#aaa; border-radius:50%; top:2px; left:2px; transition:all 0.3s; }
+  .toggle-switch.on::after { left:24px; background:#44dd88; }
+  .auto-dungeon-select { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:8px 12px; color:var(--text); font-family:'Crimson Pro',serif; font-size:0.9rem; margin-bottom:8px; }
+  .auto-speed-btns { display:flex; gap:6px; }
+  .speed-btn { flex:1; padding:5px; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); font-size:0.78rem; cursor:pointer; font-family:'Crimson Pro',serif; transition:all 0.2s; text-align:center; }
+  .speed-btn.active { border-color:#44dd8860; color:#44dd88; background:#44dd8810; }
+  .auto-log { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px; max-height:120px; overflow-y:auto; font-size:0.75rem; color:var(--text-dim); font-family:monospace; line-height:1.6; }
+  .auto-log-line { margin-bottom:2px; }
+  .auto-log-line.good { color:#60e080; }
+  .auto-log-line.gold { color:var(--gold); }
+  .auto-log-line.rare { color:#cc44ff; }
+
+  /* ADVENTURE LOG */
+  .adv-log-entry { background:var(--bg3); border-left:3px solid var(--border); border-radius:0 8px 8px 0; padding:10px 14px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start; animation:drop-in 0.3s both; }
+  .adv-log-entry.entry-gold { border-left-color:var(--gold); }
+  .adv-log-entry.entry-epic { border-left-color:#cc44ff; }
+  .adv-log-entry.entry-legendary { border-left-color:#ffdd00; }
+  .adv-log-entry.entry-boss { border-left-color:#ff3333; }
+  .adv-log-entry.entry-craft { border-left-color:#44dd88; }
+  .adv-time { font-size:0.65rem; color:var(--text-dim); flex-shrink:0; font-family:monospace; margin-top:2px; }
+  .adv-msg { font-size:0.82rem; flex:1; }
+  .adv-log-wrap { max-height:420px; overflow-y:auto; }
   @media(max-width:600px) { .grid-2 { grid-template-columns:1fr; } }
   ::-webkit-scrollbar { width:6px; }
   ::-webkit-scrollbar-track { background:var(--bg); }
@@ -338,30 +445,219 @@
   .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
   .section-title { font-family:'Cinzel Decorative',serif; font-size:1.3rem; background:linear-gradient(135deg,#f0c040,#ff9010); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .badge { background:#f0c04020; border:1px solid #f0c04040; color:var(--gold); border-radius:20px; padding:2px 10px; font-size:0.75rem; }
+  /* ===== MOBILE OPTIMIZATIONS ===== */
+  html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+  body { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; padding-bottom: env(safe-area-inset-bottom, 16px); }
+  @media (max-width: 480px) {
+    header { padding: 8px 12px; }
+    .logo { font-size: 1.1rem; }
+    .currency { padding: 4px 8px; font-size: 0.85rem; gap: 4px; }
+    .tabs { padding: 0 8px; gap: 2px; }
+    .tab { padding: 10px 10px; font-size: 0.82rem; }
+    main { padding: 12px; }
+    .dungeon-grid { grid-template-columns: repeat(auto-fill,minmax(110px,1fr)); gap: 8px; }
+    .box-grid { grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 10px; }
+    .shop-grid { grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 8px; }
+    .inv-grid { grid-template-columns: repeat(auto-fill,minmax(70px,1fr)); gap: 6px; }
+    .craft-grid { grid-template-columns: 1fr; }
+    .deal-layout { grid-template-columns: 1fr; }
+    .ach-grid { grid-template-columns: 1fr; }
+    .relic-grid { grid-template-columns: repeat(auto-fill,minmax(140px,1fr)); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .section-title { font-size: 1rem; }
+    #level-badge { width: 36px; height: 36px; font-size: 0.7rem; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .dungeon-card .d-emoji { font-size: 1.8rem; }
+    .dungeon-card .name { font-size: 0.82rem; }
+    .boss-emoji { font-size: 2.5rem; }
+    .iap-grid { grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); }
+    .craft-filter-bar { gap: 5px; }
+    .craft-filter-btn { padding: 4px 10px; font-size: 0.72rem; }
+    .btn { padding: 8px 14px; font-size: 0.9rem; }
+    .quest-item { flex-wrap: wrap; gap: 8px; }
+    .quest-reward { text-align: left; }
+  }
+  @media (max-width: 360px) {
+    .currency.dust { display: none; }
+    .tab { padding: 9px 7px; font-size: 0.75rem; }
+  }
+
+  /* ===== LOGIN SCREEN ===== */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: radial-gradient(ellipse at 30% 20%, #2a0a1888 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, #0a1a3a88 0%, transparent 60%), #0a0608;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  #login-screen.hidden { display: none; }
+  .login-box {
+    background: var(--bg2); border: 2px solid var(--border); border-radius: 20px;
+    padding: 32px 28px; max-width: 380px; width: 100%;
+    box-shadow: 0 0 60px #00000080, 0 0 120px #f0c04010;
+  }
+  .login-logo {
+    font-family: 'Cinzel Decorative', serif; font-size: 1.8rem;
+    background: linear-gradient(135deg,#f0c040,#ff9010,#f0c040);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    text-align: center; margin-bottom: 6px; filter: drop-shadow(0 0 10px #f0c04066);
+  }
+  .login-sub { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-bottom: 24px; }
+  .login-tabs { display: flex; gap: 0; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .login-tab { flex: 1; padding: 9px; text-align: center; cursor: pointer; font-size: 0.88rem; background: none; color: var(--text-dim); border: none; font-family: 'Crimson Pro', serif; transition: all 0.2s; }
+  .login-tab.active { background: var(--border); color: var(--text); }
+  .login-field { margin-bottom: 12px; }
+  .login-field label { display: block; font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  .login-field input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: 'Crimson Pro', serif; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+  .login-field input:focus { border-color: var(--gold-dark); }
+  .login-btn { width: 100%; padding: 12px; background: linear-gradient(135deg,#c89a10,#f0c040,#c89a10); border: none; border-radius: 10px; color: #1a0800; font-family: 'Cinzel Decorative', serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-bottom: 10px; }
+  .login-btn:hover { transform: translateY(-1px); box-shadow: var(--glow-gold); }
+  .login-btn.guest { background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim); font-family: 'Crimson Pro', serif; font-size: 0.88rem; }
+  .login-btn.guest:hover { border-color: var(--gold); color: var(--text); background: var(--bg); transform: none; box-shadow: none; }
+  .login-error { color: #ff6666; font-size: 0.8rem; text-align: center; margin-bottom: 8px; min-height: 18px; }
+  .login-loot-id { text-align: center; font-size: 0.72rem; color: var(--text-dim); margin-top: 12px; }
+  .login-loot-id span { color: var(--gold); font-family: monospace; font-size: 0.75rem; }
+
+  /* ===== SETTINGS PANEL ===== */
+  .settings-overlay { position: fixed; inset: 0; background: #00000090; backdrop-filter: blur(4px); z-index: 5000; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .settings-overlay.visible { opacity: 1; pointer-events: all; }
+  .settings-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; margin: 0 auto; padding: 24px 20px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(.34,1.56,.64,1); max-height: 80vh; overflow-y: auto; }
+  .settings-overlay.visible .settings-panel { transform: translateY(0); }
+  .settings-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .settings-title { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: var(--gold); margin-bottom: 16px; }
+  .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 0.9rem; }
+  .settings-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+  .settings-val { font-size: 0.85rem; color: var(--gold); font-family: monospace; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  .settings-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .settings-danger-btn { padding: 8px 16px; background: #2a0000; border: 1px solid #ff333360; color: #ff6666; border-radius: 8px; cursor: pointer; font-family: 'Crimson Pro', serif; font-size: 0.85rem; transition: all 0.2s; }
+  .settings-danger-btn:hover { background: #4a0000; }
+  .user-info-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  .user-loot-id { font-family: monospace; font-size: 0.8rem; color: var(--gold); word-break: break-all; }
+  .user-mode-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.68rem; margin-top: 4px; }
+  .mode-normal { background: #1a3a1a; border: 1px solid #44dd8840; color: #44dd88; }
+  .mode-hardcore { background: #3a0000; border: 1px solid #ff333360; color: #ff6666; }
+  .mode-speedrun { background: #001a3a; border: 1px solid #4488ff60; color: #4488ff; }
+
+  /* ===== HEADER BUTTONS ===== */
+  .header-btn { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: all 0.2s; color: var(--text-dim); }
+  .header-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .loot-id-chip { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.68rem; color: var(--text-dim); font-family: monospace; cursor: pointer; white-space: nowrap; overflow: hidden; max-width: 80px; text-overflow: ellipsis; }
+
+  /* ===== HARDCORE MODE ===== */
+  body.mode-hardcore { --bg: #0a0000; --bg2: #120000; --bg3: #1a0000; --border: #4a1010; }
+  body.mode-hardcore header { background: linear-gradient(180deg,#0d0000 0%,#120000 100%); border-color: #4a1010; }
+  body.mode-hardcore .logo::after { content: ' ☠️'; }
+  .hardcore-warning { background: linear-gradient(135deg,#2a0000,#1a0000); border: 2px solid #ff333360; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.82rem; color: #ff8888; text-align: center; animation: pulse-border-red 2s infinite; }
+
+  /* ===== SPEEDRUN MODE ===== */
+  body.mode-speedrun header { border-bottom-color: #4488ff80; }
+  .speedrun-timer { font-family: 'Cinzel Decorative', serif; font-size: 0.75rem; color: #4488ff; letter-spacing: 1px; }
+
 </style>
 </head>
 <body>
 
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚔️ LootQuest</div>
+    <div class="login-sub">Dein episches Abenteuer wartet</div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchLoginTab('login')">Anmelden</button>
+      <button class="login-tab" onclick="switchLoginTab('register')">Registrieren</button>
+    </div>
+    <div id="login-error" class="login-error"></div>
+    <div class="login-field">
+      <label>Benutzername</label>
+      <input type="text" id="login-email" placeholder="mein_held" autocomplete="username" maxlength="30">
+    </div>
+    <div class="login-field">
+      <label>Passwort</label>
+      <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field" id="register-username-field" style="display:none">
+      <label>Anzeigename (optional)</label>
+      <input type="text" id="login-username" placeholder="Dein Heldenname" maxlength="30">
+    </div>
+    <button class="login-btn" onclick="doLogin()" id="login-main-btn">⚔️ Anmelden</button>
+    <button class="login-btn guest" onclick="doGuest()">👤 Als Gast spielen</button>
+    <div class="login-loot-id">Kein E-Mail nötig – nur Benutzername & Passwort.<br>Deine <span>LootID</span> wird automatisch vergeben.</div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS OVERLAY ===== -->
+<div class="settings-overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="settings-panel">
+    <div class="settings-handle"></div>
+    <div class="settings-title">⚙️ Einstellungen</div>
+    <div class="user-info-box" id="settings-user-info">
+      <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:4px;">Eingeloggt als:</div>
+      <div id="settings-username" style="font-weight:700;margin-bottom:4px;"></div>
+      <div class="user-loot-id" id="settings-loot-id"></div>
+      <div id="settings-mode-badge"></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">🎮 Spielmodus</div><div class="settings-sub">Ändert Schwierigkeit & Regeln</div></div>
+      <select id="settings-mode-select" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:'Crimson Pro',serif;font-size:0.88rem;" onchange="changeGameMode(this.value)">
+        <option value="normal">⚔️ Normal</option>
+        <option value="hardcore">💀 Hardcore</option>
+        <option value="speedrun">⚡ Speedrun</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">🔔 Toast-Meldungen</div><div class="settings-sub" id="toast-setting-sub">Alle Meldungen an</div></div>
+      <div class="toggle-switch" id="toast-toggle" onclick="toggleSetting('toasts')" style="flex-shrink:0"></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">💾 Cloud-Sync</div><div class="settings-sub" id="sync-setting-sub">Automatisch</div></div>
+      <div class="toggle-switch" id="sync-toggle" onclick="toggleSetting('cloudSync')" style="flex-shrink:0"></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">🌙 Kompakt-Modus</div><div class="settings-sub">Kleinere UI-Elemente</div></div>
+      <div class="toggle-switch" id="compact-toggle" onclick="toggleSetting('compact')" style="flex-shrink:0"></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-label">📊 Statistiken</div></div>
+      <div style="font-size:0.78rem;color:var(--text-dim);text-align:right" id="settings-stats"></div>
+    </div>
+    <div class="settings-btn-row">
+      <button class="settings-danger-btn" onclick="confirmReset()">🗑️ Spielstand zurücksetzen</button>
+      <button class="settings-danger-btn" onclick="doLogout()">🚪 Abmelden</button>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="logo">⚔️ LootQuest</div>
-  <div class="currencies">
-    <div class="currency gold"><span>🪙</span><span class="amount" id="gold-display">0</span></div>
-    <div class="currency gems"><span>💎</span><span class="amount" id="gems-display">0</span></div>
-    <div class="currency dust"><span>✨</span><span class="amount" id="dust-display">0</span></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div id="speedrun-timer-display" class="speedrun-timer" style="display:none"></div>
+    <div class="currencies">
+      <div class="currency gold"><span>🪙</span><span class="amount" id="gold-display">0</span></div>
+      <div class="currency gems"><span>💎</span><span class="amount" id="gems-display">0</span></div>
+      <div class="currency dust"><span>✨</span><span class="amount" id="dust-display">0</span></div>
+    </div>
+    <div id="loot-id-chip" class="loot-id-chip" onclick="openSettings()" title="LootID / Einstellungen">…</div>
     <div id="level-badge"><span class="lv">LV</span><span id="level-num">1</span></div>
+    <div class="header-btn" onclick="openSettings()">⚙️</div>
   </div>
 </header>
 <div class="xp-bar-wrap"><div id="xp-bar"></div></div>
 
-<div class="tabs">
+<div class="tabs" id="main-tabs">
   <button class="tab active" onclick="switchTab('adventure',this)">⚔️ Abenteuer</button>
   <button class="tab" onclick="switchTab('boxes',this)">📦 Kisten</button>
   <button class="tab" onclick="switchTab('shop',this)">🛒 Shop</button>
   <button class="tab" onclick="switchTab('craft',this)">⚒️ Crafting</button>
   <button class="tab" onclick="switchTab('dealing',this)">🤝 Handel</button>
+  <button class="tab" onclick="switchTab('raids',this)">💀 Raids</button>
+  <button class="tab" onclick="switchTab('relics',this)">🏺 Relikte</button>
+  <button class="tab" onclick="switchTab('auto',this)">🤖 Auto</button>
   <button class="tab" onclick="switchTab('inventory',this)">🎒 Inventar</button>
   <button class="tab" onclick="switchTab('quests',this)">📜 Quests</button>
   <button class="tab" onclick="switchTab('daily',this)">🎁 Täglich</button>
+  <button class="tab" onclick="switchTab('achievements',this)">🏆 Erfolge</button>
+  <button class="tab" onclick="switchTab('log',this)">📋 Log</button>
   <button class="tab" onclick="switchTab('iap',this)">💳 Shop+</button>
   <button class="tab" onclick="switchTab('prestige',this)">⭐ Prestige</button>
 </div>
@@ -455,6 +751,69 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="section" id="section-raids">
+    <div class="section-header">
+      <span class="section-title">💀 Boss-Raids</span>
+      <span class="badge" id="raid-power-badge">Macht: 0</span>
+    </div>
+    <div id="boss-list"></div>
+  </div>
+
+  <div class="section" id="section-relics">
+    <div class="section-header">
+      <span class="section-title">🏺 Relikte</span>
+      <span class="badge">Ausgerüstet: <span id="relic-equip-count">0</span>/4</span>
+    </div>
+    <div class="panel">
+      <div class="panel-title">🎯 Ausgerüstete Relikte</div>
+      <div class="relic-slots" id="relic-slots"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">📦 Verfügbare Relikte</div>
+      <div class="relic-grid" id="relic-grid"></div>
+    </div>
+  </div>
+
+  <div class="section" id="section-auto">
+    <div class="section-header">
+      <span class="section-title">🤖 Auto-Erkunden</span>
+      <span class="badge" id="auto-status-badge">Inaktiv</span>
+    </div>
+    <div class="auto-card" id="auto-card">
+      <div class="auto-toggle">
+        <span class="auto-label">🤖 Auto-Explore</span>
+        <div class="toggle-switch" id="auto-toggle-btn" onclick="toggleAutoExplore()"></div>
+      </div>
+      <label style="font-size:0.78rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Dungeon:</label>
+      <select class="auto-dungeon-select" id="auto-dungeon-select"></select>
+      <label style="font-size:0.78rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Geschwindigkeit:</label>
+      <div class="auto-speed-btns" id="auto-speed-btns">
+        <div class="speed-btn active" onclick="setAutoSpeed(1)">🐢 Langsam</div>
+        <div class="speed-btn" onclick="setAutoSpeed(2)">🏃 Normal</div>
+        <div class="speed-btn" onclick="setAutoSpeed(3)">⚡ Schnell</div>
+        <div class="speed-btn" onclick="setAutoSpeed(4)">🚀 Max</div>
+      </div>
+      <div style="margin-top:10px;font-size:0.78rem;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Live-Log:</div>
+      <div class="auto-log" id="auto-log"></div>
+    </div>
+  </div>
+
+  <div class="section" id="section-achievements">
+    <div class="section-header">
+      <span class="section-title">🏆 Erfolge</span>
+      <span class="badge" id="ach-progress-badge">0 / 0</span>
+    </div>
+    <div class="ach-grid" id="ach-grid"></div>
+  </div>
+
+  <div class="section" id="section-log">
+    <div class="section-header">
+      <span class="section-title">📋 Abenteuer-Log</span>
+      <button class="deal-refresh-btn" onclick="clearLog()">🗑️ Löschen</button>
+    </div>
+    <div class="adv-log-wrap" id="adv-log-wrap"></div>
   </div>
 
   <div class="section" id="section-daily">
@@ -832,6 +1191,31 @@ const DUNGEONS = [
   {id:'cosmos_rift',   name:'Kosmos-Riss',      emoji:'🌠', goldMin:20000, goldMax:100000, xp:20000, cooldown:900,  reqLevel:60, reqPower:20000,
    drops:['cosmos_destroyer','endless_void','time_void','zero_point','anti_crown'],
    rates:{secret:1.0}},
+  // ---- 8 MORE DUNGEONS (total 32) ----
+  {id:'plague_fields',  name:'Seuchenfelder',     emoji:'🌫️', goldMin:35,    goldMax:90,     xp:55,    cooldown:7,    reqLevel:3,  reqPower:10,
+   drops:['worm','mushroom','bat_wing','spider_silk','venom_dagger','plague_mask'],
+   rates:{common:0.55,uncommon:0.30,rare:0.13,epic:0.02}},
+  {id:'storm_peaks',    name:'Sturmgipfel',        emoji:'⛈️', goldMin:140,   goldMax:340,    xp:160,   cooldown:22,   reqLevel:9,  reqPower:70,
+   drops:['storm_gem','storm_blade','thunder_helm','thunder_crown','chaos_axe'],
+   rates:{uncommon:0.20,rare:0.40,epic:0.30,mythic:0.10}},
+  {id:'abyssal_sea',    name:'Abyssale See',       emoji:'🌊', goldMin:280,   goldMax:700,    xp:280,   cooldown:38,   reqLevel:13, reqPower:220,
+   drops:['glacial_staff','vortex_orb','phantom_blade','soul_lantern','aeons_shield'],
+   rates:{rare:0.20,epic:0.30,mythic:0.38,legendary:0.12}},
+  {id:'eldritch_tower', name:'Eldritch-Turm',      emoji:'🗼', goldMin:450,   goldMax:1100,   xp:450,   cooldown:65,   reqLevel:17, reqPower:550,
+   drops:['cursed_crown','elder_staff','elder_blade','elder_rune','void_eye'],
+   rates:{epic:0.15,mythic:0.45,legendary:0.35,chromatic:0.05}},
+  {id:'mirror_realm',   name:'Spiegelreich',       emoji:'🪞', goldMin:700,   goldMax:1800,   xp:700,   cooldown:85,   reqLevel:19, reqPower:700,
+   drops:['mirror_shield','iris_blade','void_prism','spectrum_eye','hue_dagger'],
+   rates:{epic:0.10,mythic:0.35,legendary:0.35,chromatic:0.20}},
+  {id:'time_fracture',  name:'Zeitbruch',          emoji:'⌛', goldMin:1500,  goldMax:5000,   xp:1500,  cooldown:150,  reqLevel:28, reqPower:1800,
+   drops:['time_void','eternity_cloak','omega_bow','astral_staff','cosmos_orb'],
+   rates:{mythic:0.15,legendary:0.40,chromatic:0.35,secret:0.10}},
+  {id:'forgotten_city', name:'Vergessene Stadt',   emoji:'🏙️', goldMin:4000,  goldMax:15000,  xp:4000,  cooldown:360,  reqLevel:38, reqPower:4000,
+   drops:['forgotten_blade','beyond_shield','inverse_ring','null_ring','phantom_eye'],
+   rates:{chromatic:0.25,secret:0.75}},
+  {id:'end_of_all',     name:'Ende aller Dinge',   emoji:'💥', goldMin:50000, goldMax:250000, xp:50000, cooldown:1800, reqLevel:75, reqPower:50000,
+   drops:['cosmos_destroyer','endless_void','null_blade','void_heart','echo_crown'],
+   rates:{secret:1.0}},
 ];
 
 // ============================================================
@@ -881,26 +1265,325 @@ const SHOP_DUST = [
   {id:'prism_sword', qty:1, emoji:'🌈', name:'Prismaschwert',      price:2000,rarity:'chromatic'},
 ];
 
+// ============================================================
+//  GAME MODES
+// ============================================================
+const GAME_MODES = {
+  normal:   { id:'normal',   label:'Normal',   emoji:'⚔️', desc:'Klassisches Spielerlebnis' },
+  hardcore: { id:'hardcore', label:'Hardcore', emoji:'💀', desc:'Tod = Spielstand verloren! Alle Boni +50%, aber kein Revive.' },
+  speedrun: { id:'speedrun', label:'Speedrun', emoji:'⚡', desc:'Timer läuft! Ziel: Level 10 + Prestige so schnell wie möglich.' },
+};
+
+// ============================================================
+//  STATE
+// ============================================================
 let state = {
   gold:50, gems:5, dust:0, xp:0, level:1, prestige:0,
   inventory:[], stats:{runs:0,kills:0,items:0,prestiges:0},
   cooldowns:{}, quests:[], dailyQuests:[],
-  lastDailyReset:0, dailyLoginDay:0, lastLoginDate:'', loginStreak:0,
+  lastDailyReset:0, lastLoginDate:'', loginStreak:0,
   unlockedDungeons:['forest'],
+  gameMode: 'normal',
+  settings: { toasts:true, cloudSync:true, compact:false },
+  speedrunStart: null, speedrunBest: null,
 };
-function save() { try { localStorage.setItem('lootquest_v5',JSON.stringify(state)); } catch(e){} }
-function load() {
+
+// ============================================================
+//  AUTH / LOOT-ID / FIREBASE
+// ============================================================
+let currentUser = null;
+let lootId = null;
+let isGuest = false;
+let loginTab = 'login';
+
+// Hash helper – SHA-256 via Web Crypto, returns hex string
+async function sha256hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// Derive a short display ID from the username
+function getLootId(username) {
+  let h = 0;
+  for(let i=0;i<username.length;i++) { h = ((h<<5)-h) + username.charCodeAt(i); h |= 0; }
+  return 'LQ-' + Math.abs(h).toString(16).toUpperCase().padStart(6,'0');
+}
+
+function switchLoginTab(tab) {
+  loginTab = tab;
+  document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
+  document.getElementById('register-username-field').style.display = tab==='register'?'block':'none';
+  document.getElementById('login-main-btn').textContent = tab==='login'?'⚔️ Anmelden':'⚔️ Registrieren';
+  document.getElementById('login-error').textContent = '';
+}
+
+async function doLogin() {
+  const usernameRaw = document.getElementById('login-email').value.trim();   // field reused for username
+  const pw          = document.getElementById('login-pw').value;
+  const errEl       = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  if(!usernameRaw || !pw) { errEl.textContent = 'Benutzername und Passwort eingeben!'; return; }
+
+  // Sanitise: lowercase, no spaces, max 30 chars
+  const username = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,30);
+  if(!username) { errEl.textContent = 'Ungültiger Benutzername (nur a-z, 0-9, _).'; return; }
+
   try {
-    const d=localStorage.getItem('lootquest_v5');
+    const pwHash = await sha256hex(pw);
+    const userRef = window._fbRef(window._fbDb, 'users/' + username);
+
+    if(loginTab === 'login') {
+      // ── LOGIN ──────────────────────────────────────────────
+      const snap = await window._fbGet(userRef);
+      if(!snap.exists()) { errEl.textContent = 'Kein Konto gefunden.'; return; }
+      const data = snap.val();
+      if(data.profile?.pwHash !== pwHash) { errEl.textContent = 'Falsches Passwort.'; return; }
+
+      // Success: set session and load game
+      currentUser = { username, uid: username };
+      lootId = getLootId(username);
+      window._userName = data.profile?.displayName || username;
+      await loadFromCloud(username);
+      hideLoginScreen();
+      initGame();
+
+    } else {
+      // ── REGISTER ───────────────────────────────────────────
+      const displayName = document.getElementById('login-username').value.trim() || username;
+      const snap = await window._fbGet(userRef);
+      if(snap.exists()) { errEl.textContent = 'Benutzername bereits vergeben.'; return; }
+
+      // Write profile (no email required anymore)
+      await window._fbSet(window._fbRef(window._fbDb, 'users/' + username + '/profile'), {
+        pwHash, displayName, createdAt: Date.now()
+      });
+
+      // Success: set session and start fresh game
+      currentUser = { username, uid: username };
+      lootId = getLootId(username);
+      window._userName = displayName;
+      hideLoginScreen();
+      initGame();
+    }
+  } catch(e) {
+    errEl.textContent = 'Fehler: ' + (e.message || e);
+  }
+}
+
+async function doGuest() {
+  isGuest = true;
+  lootId = 'GAST-' + Math.random().toString(36).substr(2,6).toUpperCase();
+  currentUser = null;
+  hideLoginScreen();
+  loadLocal();
+  initGame();
+}
+
+function doLogout() {
+  currentUser = null;
+  lootId = null;
+  isGuest = false;
+  // Clear local session so auto-login doesn't re-enter
+  try { localStorage.removeItem('lootquest_session'); } catch(e){}
+  showLoginScreen();
+  closeSettings();
+}
+
+function showLoginScreen() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('main-tabs').style.display='none';
+}
+function hideLoginScreen() {
+  document.getElementById('login-screen').classList.add('hidden');
+}
+
+// ============================================================
+//  SAVE / LOAD (Firebase + LocalStorage fallback)
+// ============================================================
+function save() {
+  try { localStorage.setItem('lootquest_v6', JSON.stringify(state)); } catch(e){}
+  if(currentUser && !isGuest && state.settings?.cloudSync!==false && window._fbSet && window._fbRef && window._fbDb) {
+    const saveData = JSON.parse(JSON.stringify(state));
+    // DB key is the username (uid alias)
+    window._fbSet(window._fbRef(window._fbDb, 'users/' + currentUser.username + '/gameState'), saveData).catch(()=>{});
+  }
+}
+
+function loadLocal() {
+  try {
+    const d = localStorage.getItem('lootquest_v6') || localStorage.getItem('lootquest_v5');
     if(d) {
-      const loaded=JSON.parse(d);
-      state=Object.assign(state,loaded);
-      if(!state.dust) state.dust=0;
-      if(!state.dailyQuests) state.dailyQuests=[];
-      if(!state.unlockedDungeons) state.unlockedDungeons=['forest'];
+      const loaded = JSON.parse(d);
+      state = Object.assign(state, loaded);
     }
   } catch(e){}
+  fixStateDefaults();
 }
+
+async function loadFromCloud(username) {
+  try {
+    const snap = await window._fbGet(window._fbRef(window._fbDb, 'users/' + username + '/gameState'));
+    if(snap.exists()) {
+      state = Object.assign(state, snap.val());
+    } else {
+      loadLocal();
+    }
+  } catch(e) { loadLocal(); }
+  fixStateDefaults();
+}
+
+function fixStateDefaults() {
+  if(!state.dust) state.dust=0;
+  if(!state.dailyQuests) state.dailyQuests=[];
+  if(!state.unlockedDungeons) state.unlockedDungeons=['forest'];
+  if(!state.settings) state.settings={toasts:true,cloudSync:true,compact:false};
+  if(!state.gameMode) state.gameMode='normal';
+  if(!state.stats.autoRuns) state.stats.autoRuns=0;
+  if(!state.stats.crafted) state.stats.crafted=0;
+  if(!state.stats.deals) state.stats.deals=0;
+}
+
+// ============================================================
+//  SETTINGS
+// ============================================================
+function openSettings() {
+  const ov = document.getElementById('settings-overlay');
+  ov.classList.add('visible');
+  // Fill in user info
+  const nameEl = document.getElementById('settings-username');
+  const lidEl = document.getElementById('settings-loot-id');
+  const modeEl = document.getElementById('settings-mode-badge');
+  if(nameEl) nameEl.textContent = currentUser ? (window._userName || currentUser.username) : (isGuest ? 'Gast' : '—');
+  if(lidEl) lidEl.textContent = 'LootID: ' + (lootId||'—');
+  const mode = GAME_MODES[state.gameMode]||GAME_MODES.normal;
+  if(modeEl) modeEl.innerHTML = `<span class="user-mode-badge mode-${state.gameMode}">${mode.emoji} ${mode.label}</span>`;
+  // Sync toggle states
+  const t = state.settings||{};
+  ['toasts','cloudSync','compact'].forEach(k=>{
+    const el = document.getElementById({toasts:'toast-toggle',cloudSync:'sync-toggle',compact:'compact-toggle'}[k]);
+    if(el) el.classList.toggle('on', t[k]!==false);
+  });
+  document.getElementById('settings-mode-select').value = state.gameMode||'normal';
+  // Stats
+  const st = state.stats;
+  const statsEl = document.getElementById('settings-stats');
+  if(statsEl) statsEl.innerHTML = `Runs: ${fmt(st.runs)}<br>Items: ${fmt(st.items)}<br>Kills: ${fmt(st.kills)}`;
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('visible');
+}
+
+function toggleSetting(key) {
+  if(!state.settings) state.settings={};
+  state.settings[key] = !state.settings[key];
+  const ids = {toasts:'toast-toggle',cloudSync:'sync-toggle',compact:'compact-toggle'};
+  const subs = {toasts:'toast-setting-sub',cloudSync:'sync-setting-sub'};
+  document.getElementById(ids[key])?.classList.toggle('on', state.settings[key]);
+  if(key==='compact') document.body.classList.toggle('compact', state.settings[key]);
+  save();
+}
+
+function changeGameMode(mode) {
+  if(!GAME_MODES[mode]) return;
+  if(mode === state.gameMode) return;
+  if(!confirm(`Spielmodus zu "${GAME_MODES[mode].label}" wechseln?\n${GAME_MODES[mode].desc}\n\nAchtung: Für Hardcore/Speedrun wird der aktuelle Fortschritt gelöscht!`)) {
+    document.getElementById('settings-mode-select').value = state.gameMode;
+    return;
+  }
+  const oldSettings = state.settings;
+  state.gameMode = mode;
+  applyGameMode();
+  // Reset if switching to hardcore or speedrun
+  if(mode==='hardcore'||mode==='speedrun') {
+    const oldMode=mode;
+    state = { gold:50, gems:5, dust:0, xp:0, level:1, prestige:0, inventory:[], stats:{runs:0,kills:0,items:0,prestiges:0}, cooldowns:{}, quests:[], dailyQuests:[], lastDailyReset:0, lastLoginDate:'', loginStreak:0, unlockedDungeons:['forest'], gameMode:mode, settings:oldSettings };
+    if(mode==='speedrun') state.speedrunStart = Date.now();
+    initQuests(); initDailyQuests(); initBosses();
+  }
+  toast(`${GAME_MODES[mode].emoji} Modus: ${GAME_MODES[mode].label}!`, 'gold');
+  save(); renderAll(); closeSettings();
+}
+
+function applyGameMode() {
+  const mode = state.gameMode||'normal';
+  document.body.className = document.body.className.replace(/mode-\w+/g,'').trim();
+  document.body.classList.add('mode-'+mode);
+  const timerEl = document.getElementById('speedrun-timer-display');
+  if(timerEl) timerEl.style.display = mode==='speedrun' ? '' : 'none';
+}
+
+function confirmReset() {
+  if(!confirm('Spielstand wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden!')) return;
+  const oldSettings = state.settings;
+  const oldMode = state.gameMode;
+  state = { gold:50, gems:5, dust:0, xp:0, level:1, prestige:0, inventory:[], stats:{runs:0,kills:0,items:0,prestiges:0}, cooldowns:{}, quests:[], dailyQuests:[], lastDailyReset:0, lastLoginDate:'', loginStreak:0, unlockedDungeons:['forest'], gameMode:oldMode, settings:oldSettings };
+  initQuests(); initDailyQuests(); initBosses();
+  save(); renderAll(); closeSettings();
+  toast('💀 Spielstand zurückgesetzt.', 'bad');
+}
+
+// ============================================================
+//  SPEEDRUN TIMER
+// ============================================================
+function updateSpeedrunTimer() {
+  if(state.gameMode!=='speedrun') return;
+  const el = document.getElementById('speedrun-timer-display');
+  if(!el) return;
+  const elapsed = state.speedrunStart ? Date.now()-state.speedrunStart : 0;
+  const h=Math.floor(elapsed/3600000), m=Math.floor(elapsed%3600000/60000), s=Math.floor(elapsed%60000/1000);
+  el.textContent = `⚡ ${h?h+'h ':''}${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  // Speedrun win condition: level 10 + prestige 1
+  if(state.prestige>=1 && state.gameMode==='speedrun' && !state.speedrunFinished) {
+    state.speedrunFinished = true;
+    const t = elapsed;
+    const best = state.speedrunBest;
+    if(!best||t<best) { state.speedrunBest=t; toast('🏆 Neuer Bestzeit-Rekord!','gold'); }
+    const mins = Math.floor(t/60000), secs = Math.floor(t%60000/1000);
+    showPopupSimple('⚡','Speedrun abgeschlossen!',`Zeit: ${mins}:${String(secs).padStart(2,'0')}`);
+    save();
+  }
+}
+
+// ============================================================
+//  HARDCORE MODE HELPERS
+// ============================================================
+function hardcoreMultiplier() {
+  return state.gameMode==='hardcore' ? 1.5 : 1;
+}
+
+// ============================================================
+//  LOOT-ID DISPLAY
+// ============================================================
+function updateLootIdDisplay() {
+  const chip = document.getElementById('loot-id-chip');
+  if(chip) chip.textContent = lootId || '---';
+}
+
+// ============================================================
+//  FIREBASE READY — show login screen (no auto-login)
+// ============================================================
+window._onFirebaseReady = function() {
+  if(initDone) return;
+  // Show login screen – user must authenticate via DB
+  document.getElementById('login-screen').classList.remove('hidden');
+};
+
+function initGame() {
+  fixStateDefaults();
+  applyGameMode();
+  updateLootIdDisplay();
+  initQuests(); initDailyQuests(); initDeals(); initBosses();
+  checkDailyLogin(); checkQuests(); checkDailyQuests(); checkAchievements();
+  renderAll();
+  addLog('⚔️ Abenteuer begonnen!', 'gold');
+  if(state.settings?.toasts!==false) toast('⚔️ Willkommen zurück, Held!','gold');
+  if(state.gameMode==='hardcore') toast('☠️ HARDCORE-Modus aktiv! Sei vorsichtig.','bad');
+  if(state.gameMode==='speedrun' && !state.speedrunStart) state.speedrunStart=Date.now();
+}
+
+
 
 // XP / LEVEL
 function xpForLevel(lv) { return Math.floor(100*Math.pow(1.4,lv-1)); }
@@ -952,21 +1635,24 @@ function exploreDungeon(idx) {
   if(state.level<d.reqLevel){toast(`Benötigt Level ${d.reqLevel}`,'bad');return;}
   const pw=calcPower();
   if(pw<d.reqPower){toast(`Benötigt ${fmt(d.reqPower)} Macht`,'bad');return;}
-  const bonus=1+state.prestige*0.15;
+  const bonus=1+state.prestige*0.15+getRelicBonus('goldMult');
   const gold=Math.floor((d.goldMin+Math.random()*(d.goldMax-d.goldMin))*bonus);
-  state.gold+=gold; state.cooldowns[d.id]=now+d.cooldown*1000;
+  state.gold+=gold; state.cooldowns[d.id]=now+Math.floor(d.cooldown*(1-getRelicBonus('cdReduction')))*1000;
   state.stats.runs++; state.stats.kills+=Math.floor(Math.random()*5)+1;
-  // Dust reward based on dungeon tier
   const dustGain=Math.floor((idx+1)*Math.random()*3+1);
-  state.dust+=dustGain;
-  addXP(d.xp);
+  state.dust+=Math.floor(dustGain*(1+getRelicBonus('dustMult')));
+  addXP(Math.floor(d.xp*(1+getRelicBonus('xpMult'))));
   const n=1+(Math.random()<0.4?1:0)+(Math.random()<0.15?1:0);
   const drops=[];
   for(let i=0;i<n;i++){const id=rollDrop(d.drops,d.rates);addItem(id);drops.push(ITEMS.find(it=>it.id===id));}
-  if(Math.random()<0.05){state.gems++;toast('💎 Gem gefunden!','gems');}
-  if(Math.random()<0.10){state.dust+=2;toast('✨ +2 Dust','good');}
+  if(Math.random()<0.05+getRelicBonus('gemChance')){state.gems++;toast('💎 Gem gefunden!','gems');}
+  if(Math.random()<0.10){state.dust+=2;}
   checkDungeonUnlocks();
-  checkQuests(); checkDailyQuests(); save(); renderAll();
+  checkQuests(); checkDailyQuests(); checkAchievements();
+  const best=drops.reduce((b,x)=>(RARITY_ORDER[x?.rarity||'common']||0)>(RARITY_ORDER[b?.rarity||'common']||0)?x:b,drops[0]);
+  const isRare=best&&['epic','mythic','legendary','chromatic','secret'].includes(best.rarity);
+  addLog(`⚔️ ${d.emoji} ${d.name}: +${fmt(gold)}🪙 ${drops.map(x=>x?.emoji||'').join('')}`, isRare?'legendary':'gold');
+  save(); renderAll();
   document.getElementById('popup-emoji').textContent=d.emoji;
   document.getElementById('popup-title').textContent=`${d.name} erkundet!`;
   document.getElementById('popup-sub').textContent=`+${fmt(gold)} 🪙  |  +${fmt(d.xp)} XP  |  +${dustGain} ✨`;
@@ -1297,7 +1983,6 @@ function canCraft(recipe) {
 function doCraft(recipeId) {
   const r = RECIPES.find(x=>x.id===recipeId);
   if(!r || !canCraft(r)) { toast('Zutaten fehlen!','bad'); return; }
-  // Consume ingredients
   for(const ing of r.ingredients) {
     const inv = state.inventory.find(i=>i.id===ing.id);
     inv.qty -= ing.qty;
@@ -1305,17 +1990,18 @@ function doCraft(recipeId) {
   }
   if(r.dustCost) state.dust -= r.dustCost;
   if(r.gemsCost) state.gems -= r.gemsCost;
-  // Add result
   addItem(r.result, r.qty||1);
+  state.stats.crafted = (state.stats.crafted||0)+1;
   const it = ITEMS.find(i=>i.id===r.result);
   toast(`⚒️ ${it.emoji} ${it.name} gecraftet!`, 'good');
-  // Popup
+  addLog(`⚒️ Gecraftet: ${it.emoji} ${it.name}`, 'craft');
   document.getElementById('popup-emoji').textContent = it.emoji;
   document.getElementById('popup-title').textContent = 'Hergestellt!';
   document.getElementById('popup-sub').textContent = `${it.name} wurde erfolgreich gecraftet!`;
   document.getElementById('drop-list').innerHTML = dropItemHTML(it, 0);
   const fl = it.rarity==='secret'?'secret-flash':it.rarity==='chromatic'?'chromatic-flash':it.rarity==='legendary'?'legendary-flash':'';
   showPopup(fl);
+  checkAchievements();
   save(); renderAll();
 }
 
@@ -1416,14 +2102,16 @@ function acceptDeal(dealId) {
   if(!deal) return;
   const inv = state.inventory.find(i=>i.id===deal.wantId);
   if(!inv || inv.qty < deal.wantQty) { toast('Du hast nicht genug von diesem Item!','bad'); return; }
-  // Take what they want
   inv.qty -= deal.wantQty;
   if(inv.qty<=0) state.inventory = state.inventory.filter(i=>i.id!==deal.wantId);
-  // Give what they offered
   addItem(deal.giveId, deal.giveQty);
+  state.stats.deals = (state.stats.deals||0)+1;
   const gave = ITEMS.find(i=>i.id===deal.giveId);
+  const gave2 = ITEMS.find(i=>i.id===deal.wantId);
   toast(`🤝 Deal! Erhalten: ${gave.emoji} ${gave.name} x${deal.giveQty}`,'gold');
+  addLog(`🤝 Handel: ${gave2?.emoji||''} ${gave2?.name||''} x${deal.wantQty} gegen ${gave.emoji} ${gave.name} x${deal.giveQty}`, 'gold');
   dealOffers = dealOffers.filter(d=>d.id!==dealId);
+  checkAchievements();
   save(); renderAll();
 }
 
@@ -1545,6 +2233,382 @@ function refreshDealSelects() {
 }
 
 
+// ============================================================
+//  BOSS RAIDS
+// ============================================================
+const BOSSES = [
+  {id:'goblin_king',  name:'Goblin-Koenig',      emoji:'👺', tier:'Normal',   maxHp:500,    reqPower:30,   reqLevel:3,  atkCd:8,   dmg:25,   rewards:{gold:300,  xp:150,  dust:5,  drops:['potion','amulet','orb']}},
+  {id:'stone_golem',  name:'Steingolem',          emoji:'🪨', tier:'Normal',   maxHp:1200,   reqPower:80,   reqLevel:6,  atkCd:10,  dmg:50,   rewards:{gold:700,  xp:350,  dust:12, drops:['dragon_scale','runic_axe']}},
+  {id:'vampire_lord', name:'Vampirlord',          emoji:'🧛', tier:'Elite',    maxHp:3000,   reqPower:200,  reqLevel:10, atkCd:12,  dmg:100,  rewards:{gold:2000, xp:800,  dust:30, drops:['ghost_cloak','crown','blood_crown']}},
+  {id:'sea_serpent',  name:'Meeresschlange',      emoji:'🐍', tier:'Elite',    maxHp:6000,   reqPower:450,  reqLevel:14, atkCd:14,  dmg:200,  rewards:{gold:4000, xp:1500, dust:60, drops:['voidstaff','glacial_staff','titan_shield']}},
+  {id:'dragon_elder', name:'Erzdrachenfuerst',    emoji:'🐲', tier:'Legendary',maxHp:15000,  reqPower:800,  reqLevel:20, atkCd:18,  dmg:400,  rewards:{gold:12000,xp:4000, dust:150,drops:['excalibur','dragon_egg','infinity_ring']}},
+  {id:'void_titan',   name:'Leerentitan',         emoji:'🌑', tier:'Mythic',   maxHp:40000,  reqPower:2000, reqLevel:30, atkCd:22,  dmg:1000, rewards:{gold:40000,xp:12000,dust:500,drops:['prism_sword','chaos_orb','void_heart']}},
+  {id:'end_lord',     name:'Lord des Endes',      emoji:'💀', tier:'Secret',   maxHp:200000, reqPower:8000, reqLevel:50, atkCd:30,  dmg:5000, rewards:{gold:200000,xp:80000,dust:2000,gems:10,drops:['cosmos_destroyer','endless_void','null_blade']}},
+];
+
+function initBosses() {
+  if(!state.bossHp) {
+    state.bossHp = {};
+    state.bossDefeated = {};
+    state.bossLastAtk = {};
+    BOSSES.forEach(b => { state.bossHp[b.id] = b.maxHp; });
+  }
+}
+
+function attackBoss(bossId) {
+  const boss = BOSSES.find(b=>b.id===bossId);
+  if(!boss) return;
+  if(state.level < boss.reqLevel) { toast(`Benötigt Level ${boss.reqLevel}!`,'bad'); return; }
+  const pw = calcPower();
+  if(pw < boss.reqPower) { toast(`Benötigt ${fmt(boss.reqPower)} Macht!`,'bad'); return; }
+  if(state.bossDefeated[bossId]) { toast('Dieser Boss ist bereits besiegt!','bad'); return; }
+  const now = Date.now();
+  if(state.bossLastAtk[bossId] && now < state.bossLastAtk[bossId] + boss.atkCd*1000) {
+    toast(`Noch ${Math.ceil((state.bossLastAtk[bossId]+boss.atkCd*1000-now)/1000)}s Cooldown!`,'bad'); return;
+  }
+  state.bossLastAtk[bossId] = now;
+  const dmg = Math.floor(pw * (0.8 + Math.random()*0.4) * (1 + state.prestige*0.2));
+  state.bossHp[bossId] = Math.max(0, state.bossHp[bossId] - dmg);
+  addLog(`⚔️ ${boss.emoji} ${boss.name} trifft für ${fmt(dmg)} Schaden! (HP: ${fmt(state.bossHp[bossId])})`, 'boss');
+  toast(`⚔️ ${fmt(dmg)} Schaden an ${boss.name}!`,'good');
+
+  if(state.bossHp[bossId] <= 0) {
+    state.bossDefeated[bossId] = true;
+    const r = boss.rewards;
+    state.gold += r.gold; state.dust += r.dust;
+    if(r.gems) state.gems += r.gems;
+    addXP(r.xp);
+    const drop = r.drops[Math.floor(Math.random()*r.drops.length)];
+    addItem(drop);
+    const dropItem = ITEMS.find(i=>i.id===drop);
+    addLog(`🏆 ${boss.name} besiegt! +${fmt(r.gold)} Gold +${r.dust} Dust +${dropItem?.emoji||''} ${dropItem?.name||drop}`, 'legendary');
+    toast(`🏆 ${boss.name} besiegt! Belohnungen eingesammelt!`,'gold');
+    showPopupSimple('🏆', `${boss.name} besiegt!`, `+${fmt(r.gold)} Gold  +${r.dust} Dust  +${fmt(r.xp)} XP`);
+    checkAchievements();
+  }
+  save(); renderAll();
+}
+
+function renderRaids() {
+  const el = document.getElementById('boss-list');
+  if(!el) return;
+  const now = Date.now(), pw = calcPower();
+  document.getElementById('raid-power-badge').textContent = `Macht: ${fmt(pw)}`;
+  el.innerHTML = BOSSES.map(boss=>{
+    const hp = state.bossHp?.[boss.id] ?? boss.maxHp;
+    const dead = state.bossDefeated?.[boss.id];
+    const lastAtk = state.bossLastAtk?.[boss.id]||0;
+    const cdLeft = Math.max(0, Math.ceil((lastAtk + boss.atkCd*1000 - now)/1000));
+    const pct = Math.round(hp/boss.maxHp*100);
+    const unlocked = state.level>=boss.reqLevel && pw>=boss.reqPower;
+    const tierColor = {Normal:'#aaa',Elite:'#cc44ff',Legendary:'#ffdd00',Mythic:'#ff3333',Secret:'#ffffff'}[boss.tier]||'#aaa';
+    return `<div class="boss-card ${dead?'boss-dead':''}">
+      <div class="boss-header">
+        <span class="boss-emoji">${boss.emoji}</span>
+        <div class="boss-info">
+          <div class="boss-name">${boss.name}</div>
+          <div class="boss-tier" style="color:${tierColor}">${boss.tier} Boss</div>
+          <div class="boss-stats"><span>HP: ${dead?'0':fmt(hp)}/${fmt(boss.maxHp)}</span><span>Min. Macht: ${fmt(boss.reqPower)}</span><span>Lv${boss.reqLevel}+</span></div>
+        </div>
+      </div>
+      <div class="boss-hp-bar"><div class="boss-hp-fill" style="width:${dead?0:pct}%"></div></div>
+      <div class="boss-rewards">
+        <span class="boss-reward-tag">🪙 ${fmt(boss.rewards.gold)}</span>
+        <span class="boss-reward-tag">✨ ${boss.rewards.dust} Dust</span>
+        ${boss.rewards.gems?`<span class="boss-reward-tag">💎 ${boss.rewards.gems} Gems</span>`:''}
+        <span class="boss-reward-tag">📦 ${boss.rewards.drops.length} mgl. Drops</span>
+      </div>
+      ${dead
+        ? `<button class="boss-attack-btn" disabled>✅ Besiegt</button>`
+        : !unlocked
+          ? `<button class="boss-attack-btn" disabled>🔒 Lv${boss.reqLevel} / ${fmt(boss.reqPower)} Macht benötigt</button>`
+          : `<button class="boss-attack-btn" ${cdLeft>0?'disabled':''} onclick="attackBoss('${boss.id}')">
+              ${cdLeft>0?`⏳ Cooldown ${cdLeft}s`:`⚔️ Angreifen (${fmt(Math.floor(pw*0.8))}–${fmt(Math.floor(pw*1.2))} Schaden)`}
+             </button>`
+      }
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  RELICS
+// ============================================================
+const RELICS_DATA = [
+  {id:'relic_gold',    emoji:'🪙', name:'Goldener Schrein',   effect:'Gold-Drops +25%',         dustCost:50,   bonus:{goldMult:0.25}},
+  {id:'relic_xp',      emoji:'⭐', name:'Weisheitsstein',     effect:'XP-Gewinn +30%',           dustCost:50,   bonus:{xpMult:0.30}},
+  {id:'relic_power',   emoji:'⚔️', name:'Kriegsrelikt',       effect:'Macht +10%',               dustCost:80,   bonus:{powerMult:0.10}},
+  {id:'relic_luck',    emoji:'🍀', name:'Kleeblatt der Schicksalsgöttinnen', effect:'Seltene Drops +15%', dustCost:100,  bonus:{luckBonus:0.15}},
+  {id:'relic_dust',    emoji:'✨', name:'Sternenstaub-Amulett',effect:'Dust-Drops +40%',          dustCost:120,  bonus:{dustMult:0.40}},
+  {id:'relic_gems',    emoji:'💎', name:'Edelsteinrelikt',    effect:'Gem-Fund-Chance +5%',       dustCost:150,  bonus:{gemChance:0.05}},
+  {id:'relic_boss',    emoji:'💀', name:'Schlachtzugbanner',  effect:'Boss-Schaden +20%',        dustCost:200,  bonus:{bossDmgMult:0.20}},
+  {id:'relic_cd',      emoji:'⏱️', name:'Sanduhr der Zeit',  effect:'Dungeon-Cooldown -20%',    dustCost:180,  bonus:{cdReduction:0.20}},
+  {id:'relic_craft',   emoji:'⚒️', name:'Schmiedeessen',      effect:'Craft-Materialien -1',     dustCost:250,  bonus:{craftDiscount:1}},
+  {id:'relic_all',     emoji:'🌟', name:'Nexus-Kern',         effect:'Alle Boni +5%',            dustCost:500,  bonus:{allMult:0.05}},
+];
+
+function getRelicBonus(key) {
+  const equipped = state.equippedRelics||[];
+  let total = 0;
+  equipped.forEach(id => {
+    const r = RELICS_DATA.find(x=>x.id===id);
+    if(r && r.bonus[key]) total += r.bonus[key];
+    if(r && r.bonus.allMult) total += r.bonus.allMult;
+  });
+  return total;
+}
+
+function buyRelic(relicId) {
+  const r = RELICS_DATA.find(x=>x.id===relicId);
+  if(!r) return;
+  if(!state.ownedRelics) state.ownedRelics = [];
+  if(state.ownedRelics.includes(relicId)) { toast('Relikt bereits besessen!','bad'); return; }
+  if(state.dust < r.dustCost) { toast(`Benötigt ${r.dustCost} Dust!`,'bad'); return; }
+  state.dust -= r.dustCost;
+  state.ownedRelics.push(relicId);
+  toast(`🏺 ${r.emoji} ${r.name} erworben!`,'gold');
+  addLog(`🏺 Relikt erworben: ${r.name}`, 'gold');
+  save(); renderAll();
+}
+
+function equipRelic(relicId) {
+  if(!state.equippedRelics) state.equippedRelics = [];
+  if(!state.ownedRelics?.includes(relicId)) return;
+  if(state.equippedRelics.includes(relicId)) {
+    state.equippedRelics = state.equippedRelics.filter(x=>x!==relicId);
+    toast('Relikt abgelegt.','');
+  } else {
+    if(state.equippedRelics.length >= 4) { toast('Maximal 4 Relikte ausrüstbar!','bad'); return; }
+    state.equippedRelics.push(relicId);
+    toast('🏺 Relikt ausgerüstet!','gold');
+  }
+  save(); renderAll();
+}
+
+function renderRelics() {
+  const grid = document.getElementById('relic-grid');
+  const slotsEl = document.getElementById('relic-slots');
+  const countEl = document.getElementById('relic-equip-count');
+  if(!grid||!slotsEl) return;
+  const owned = state.ownedRelics||[];
+  const equipped = state.equippedRelics||[];
+  if(countEl) countEl.textContent = equipped.length;
+
+  // Equipped slots
+  const slotHtml = Array.from({length:4},(_,i)=>{
+    const relicId = equipped[i];
+    const r = relicId ? RELICS_DATA.find(x=>x.id===relicId) : null;
+    return `<div class="relic-slot ${r?'filled':''}" title="${r?r.name+': '+r.effect:'Leer'}" onclick="${r?`equipRelic('${relicId}')`:''}">${r?r.emoji:'+'}</div>`;
+  }).join('');
+  slotsEl.innerHTML = slotHtml;
+
+  // Relic cards
+  grid.innerHTML = RELICS_DATA.map(r=>{
+    const isOwned = owned.includes(r.id);
+    const isEquipped = equipped.includes(r.id);
+    const canAfford = state.dust >= r.dustCost;
+    return `<div class="relic-card ${isEquipped?'equipped':isOwned?'owned':''}">
+      ${isOwned?`<span class="relic-owned-badge">${isEquipped?'Ausgerüstet':'Besessen'}</span>`:''}
+      <span class="relic-emoji">${r.emoji}</span>
+      <div class="relic-name">${r.name}</div>
+      <div class="relic-effect">${r.effect}</div>
+      ${isOwned
+        ? `<button class="relic-equip-btn" onclick="equipRelic('${r.id}')">${isEquipped?'Ablegen':'Ausrüsten'}</button>`
+        : `<div class="relic-cost">✨ ${r.dustCost} Dust</div>
+           <button class="relic-equip-btn" style="margin-top:6px;${canAfford?'':'opacity:0.4;cursor:not-allowed'}" ${canAfford?`onclick="buyRelic('${r.id}')"`:'disabled'}>Kaufen</button>`
+      }
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  ACHIEVEMENTS
+// ============================================================
+const ACHIEVEMENTS = [
+  {id:'ach_first_run',    emoji:'🗺️', name:'Erste Schritte',       desc:'Erkunde deinen ersten Dungeon',        check:()=>state.stats.runs>=1,          reward:{gold:100}},
+  {id:'ach_50runs',       emoji:'🏃', name:'Abgehärtet',           desc:'50 Dungeons erkundet',                 check:()=>state.stats.runs>=50,         reward:{gold:500,dust:20}},
+  {id:'ach_100runs',      emoji:'⚔️', name:'Veteran',              desc:'500 Dungeons erkundet',                check:()=>state.stats.runs>=500,        reward:{gold:5000,dust:100,gems:5}},
+  {id:'ach_first_epic',   emoji:'🟣', name:'Episches Fundstück',   desc:'Erstes Epic-Item gefunden',            check:()=>state.inventory.some(i=>ITEMS.find(x=>x.id===i.id)?.rarity==='epic'), reward:{gold:1000,dust:30}},
+  {id:'ach_first_mythic', emoji:'🔴', name:'Mythische Macht',      desc:'Erstes Mythic-Item gefunden',          check:()=>state.inventory.some(i=>ITEMS.find(x=>x.id===i.id)?.rarity==='mythic'), reward:{gold:5000,dust:80,gems:3}},
+  {id:'ach_first_legendary',emoji:'⭐',name:'Legendär',            desc:'Erstes Legendary-Item gefunden',      check:()=>state.inventory.some(i=>ITEMS.find(x=>x.id===i.id)?.rarity==='legendary'), reward:{gold:20000,dust:200,gems:10}},
+  {id:'ach_first_secret', emoji:'⬛', name:'Das Unbekannte',       desc:'Erstes Secret-Item gefunden',         check:()=>state.inventory.some(i=>ITEMS.find(x=>x.id===i.id)?.rarity==='secret'), reward:{gold:100000,dust:1000,gems:50}},
+  {id:'ach_boss1',        emoji:'👺', name:'Erstbesieger',         desc:'Ersten Boss besiegt',                  check:()=>Object.keys(state.bossDefeated||{}).length>=1, reward:{gold:2000,dust:50}},
+  {id:'ach_boss_all',     emoji:'💀', name:'Bossvernichter',       desc:'Alle Bosse besiegt',                   check:()=>BOSSES.every(b=>state.bossDefeated?.[b.id]), reward:{gold:100000,dust:2000,gems:30}},
+  {id:'ach_relic1',       emoji:'🏺', name:'Reliktsucher',         desc:'Erstes Relikt erworben',               check:()=>(state.ownedRelics||[]).length>=1, reward:{dust:100}},
+  {id:'ach_relic_full',   emoji:'🌟', name:'Reliktmeister',        desc:'Alle 4 Slots ausgerüstet',             check:()=>(state.equippedRelics||[]).length>=4, reward:{dust:500,gems:5}},
+  {id:'ach_craft5',       emoji:'⚒️', name:'Lehrling',             desc:'5 Items gecraftet',                    check:()=>(state.stats.crafted||0)>=5, reward:{gold:500,dust:25}},
+  {id:'ach_craft25',      emoji:'🔨', name:'Handwerker',           desc:'25 Items gecraftet',                   check:()=>(state.stats.crafted||0)>=25, reward:{gold:5000,dust:150,gems:5}},
+  {id:'ach_prestige1',    emoji:'✨', name:'Wiedergeboren',        desc:'Erstes Prestige',                      check:()=>state.prestige>=1, reward:{dust:500,gems:10}},
+  {id:'ach_prestige5',    emoji:'🌟', name:'Transzendiert',        desc:'5 Prestiges',                          check:()=>state.prestige>=5, reward:{dust:2000,gems:50}},
+  {id:'ach_10k_gold',     emoji:'💰', name:'Reicher Händler',      desc:'10.000 Gold gleichzeitig besitzen',    check:()=>state.gold>=10000, reward:{dust:50}},
+  {id:'ach_1m_gold',      emoji:'👑', name:'Goldkönig',            desc:'1.000.000 Gold gleichzeitig',          check:()=>state.gold>=1000000, reward:{dust:500,gems:20}},
+  {id:'ach_100dust',      emoji:'✨', name:'Staubsammler',         desc:'100 Dust gesammelt',                   check:()=>state.dust>=100, reward:{gold:500}},
+  {id:'ach_deal1',        emoji:'🤝', name:'Händler',              desc:'Ersten Deal abgeschlossen',            check:()=>(state.stats.deals||0)>=1, reward:{gold:200,dust:10}},
+  {id:'ach_lv10',         emoji:'🎓', name:'Auszubildender',       desc:'Level 10 erreicht',                    check:()=>state.level>=10, reward:{gold:1000,dust:30}},
+  {id:'ach_lv50',         emoji:'🧙', name:'Meister',              desc:'Level 50 erreicht',                    check:()=>state.level>=50, reward:{gold:50000,dust:500,gems:20}},
+  {id:'ach_autorun100',   emoji:'🤖', name:'Automatisiert',        desc:'100 Auto-Explore Runs',                check:()=>(state.stats.autoRuns||0)>=100, reward:{dust:200,gold:2000}},
+];
+
+function checkAchievements() {
+  if(!state.unlockedAch) state.unlockedAch = [];
+  ACHIEVEMENTS.forEach(ach=>{
+    if(!state.unlockedAch.includes(ach.id) && ach.check()) {
+      state.unlockedAch.push(ach.id);
+      const r = ach.reward;
+      if(r.gold) state.gold += r.gold;
+      if(r.dust) state.dust += r.dust;
+      if(r.gems) state.gems += r.gems;
+      toast(`🏆 Erfolg: ${ach.name}!`,'gold');
+      addLog(`🏆 Erfolg freigeschaltet: ${ach.name}`, 'legendary');
+    }
+  });
+}
+
+function renderAchievements() {
+  const grid = document.getElementById('ach-grid');
+  const badge = document.getElementById('ach-progress-badge');
+  if(!grid) return;
+  const unlocked = state.unlockedAch||[];
+  if(badge) badge.textContent = `${unlocked.length} / ${ACHIEVEMENTS.length}`;
+  grid.innerHTML = ACHIEVEMENTS.map(ach=>{
+    const done = unlocked.includes(ach.id);
+    const r = ach.reward;
+    const rwStr = [r.gold?`🪙${fmt(r.gold)}`:'', r.dust?`✨${r.dust}`:'', r.gems?`💎${r.gems}`:''].filter(Boolean).join(' ');
+    return `<div class="ach-card ${done?'unlocked':'locked'}">
+      <span class="ach-emoji">${ach.emoji}</span>
+      <div class="ach-info">
+        <div class="ach-name">${ach.name}</div>
+        <div class="ach-desc">${ach.desc}</div>
+        <div class="ach-prog">${rwStr}</div>
+        ${done?'<span class="ach-unlocked-badge">✅ Freigeschaltet</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+//  AUTO-EXPLORE
+// ============================================================
+let autoExploreInterval = null;
+let autoSpeed = 1;
+const AUTO_SPEEDS = [null, 8000, 4000, 2000, 800]; // ms per run
+
+function toggleAutoExplore() {
+  const btn = document.getElementById('auto-toggle-btn');
+  const card = document.getElementById('auto-card');
+  const badge = document.getElementById('auto-status-badge');
+  if(autoExploreInterval) {
+    clearInterval(autoExploreInterval);
+    autoExploreInterval = null;
+    btn?.classList.remove('on');
+    card?.classList.remove('running');
+    if(badge) badge.textContent = 'Inaktiv';
+    toast('🤖 Auto-Explore gestoppt.','');
+  } else {
+    startAutoExplore();
+  }
+}
+
+function startAutoExplore() {
+  const sel = document.getElementById('auto-dungeon-select');
+  const dungeonId = sel?.value;
+  if(!dungeonId) { toast('Bitte einen Dungeon wählen!','bad'); return; }
+  const btn = document.getElementById('auto-toggle-btn');
+  const card = document.getElementById('auto-card');
+  const badge = document.getElementById('auto-status-badge');
+  btn?.classList.add('on');
+  card?.classList.add('running');
+  if(badge) badge.textContent = 'Aktiv';
+  const ms = AUTO_SPEEDS[autoSpeed] || 4000;
+  autoExploreInterval = setInterval(()=>{ doAutoRun(dungeonId); }, ms);
+  toast('🤖 Auto-Explore gestartet!','good');
+}
+
+function doAutoRun(dungeonId) {
+  const idx = DUNGEONS.findIndex(d=>d.id===dungeonId);
+  if(idx<0) return;
+  const d = DUNGEONS[idx];
+  if(state.level < d.reqLevel || calcPower() < d.reqPower) {
+    autoLogLine(`⚠️ Anforderungen nicht erfüllt für ${d.name}`, 'bad');
+    return;
+  }
+  const now = Date.now();
+  if(state.cooldowns[d.id] && now < state.cooldowns[d.id]) return;
+  const bonus = 1 + state.prestige*0.15 + getRelicBonus('goldMult');
+  const gold = Math.floor((d.goldMin + Math.random()*(d.goldMax-d.goldMin))*bonus);
+  state.gold += gold;
+  state.cooldowns[d.id] = now + Math.floor(d.cooldown*(1-getRelicBonus('cdReduction')))*1000;
+  state.stats.runs++;
+  state.stats.autoRuns = (state.stats.autoRuns||0) + 1;
+  state.stats.kills += Math.floor(Math.random()*5)+1;
+  const dustGain = Math.floor((idx+1)*Math.random()*2+1);
+  state.dust += Math.floor(dustGain*(1+getRelicBonus('dustMult')));
+  addXP(Math.floor(d.xp*(1+getRelicBonus('xpMult'))));
+  const n = 1+(Math.random()<0.4?1:0);
+  const drops = [];
+  for(let i=0;i<n;i++){const id=rollDrop(d.drops,d.rates);addItem(id);drops.push(ITEMS.find(it=>it.id===id));}
+  const best = drops.reduce((b,x)=>(RARITY_ORDER[x?.rarity||'common']||0)>(RARITY_ORDER[b?.rarity||'common']||0)?x:b, drops[0]);
+  const isRare = best && ['epic','mythic','legendary','chromatic','secret'].includes(best.rarity);
+  autoLogLine(`+${fmt(gold)}🪙  ${best?best.emoji+' '+best.name:''}`, isRare?'rare':'gold');
+  checkDungeonUnlocks(); checkQuests(); checkDailyQuests(); checkAchievements();
+  updateUI();
+}
+
+function autoLogLine(msg, type='') {
+  const log = document.getElementById('auto-log');
+  if(!log) return;
+  const line = document.createElement('div');
+  line.className = `auto-log-line ${type}`;
+  line.textContent = msg;
+  log.insertBefore(line, log.firstChild);
+  while(log.children.length > 40) log.removeChild(log.lastChild);
+}
+
+function setAutoSpeed(s) {
+  autoSpeed = s;
+  document.querySelectorAll('.speed-btn').forEach((b,i)=>b.classList.toggle('active',i===s-1));
+  if(autoExploreInterval) {
+    clearInterval(autoExploreInterval);
+    const sel = document.getElementById('auto-dungeon-select');
+    if(sel?.value) startAutoExplore();
+  }
+}
+
+function renderAutoSection() {
+  const sel = document.getElementById('auto-dungeon-select');
+  if(!sel) return;
+  const currentVal = sel.value;
+  const pw = calcPower();
+  const opts = DUNGEONS.filter(d=>state.level>=d.reqLevel && pw>=d.reqPower)
+    .map(d=>`<option value="${d.id}">${d.emoji} ${d.name}</option>`).join('');
+  sel.innerHTML = '<option value="">-- Dungeon wählen --</option>' + opts;
+  if(currentVal) sel.value = currentVal;
+}
+
+// ============================================================
+//  ADVENTURE LOG
+// ============================================================
+let adventureLog = [];
+
+function addLog(msg, type='') {
+  const now = new Date();
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  adventureLog.unshift({msg, type, t});
+  if(adventureLog.length > 200) adventureLog.pop();
+}
+
+function clearLog() { adventureLog = []; renderLog(); }
+
+function renderLog() {
+  const el = document.getElementById('adv-log-wrap');
+  if(!el) return;
+  if(!adventureLog.length) { el.innerHTML='<div class="inv-empty" style="padding:30px">Noch keine Einträge. Starte ein Abenteuer!</div>'; return; }
+  el.innerHTML = adventureLog.map(e=>`<div class="adv-log-entry entry-${e.type}">
+    <span class="adv-time">${e.t}</span>
+    <span class="adv-msg">${e.msg}</span>
+  </div>`).join('');
+}
+
+
 function doPrestige() {
   if(state.level<10){toast('Benötigt Level 10!','bad');return;}
   state.prestige++; state.stats.prestiges++;
@@ -1552,7 +2616,19 @@ function doPrestige() {
   state.dust=state.prestige*10;
   state.xp=0; state.level=1; state.inventory=[]; state.cooldowns={};
   state.unlockedDungeons=['forest'];
-  toast(`✨ Prestige ${state.prestige}! Dauerhaft stärker.`,'gems'); save(); renderAll();
+  // Reset boss states so player can fight them again
+  state.bossHp = {}; state.bossDefeated = {}; state.bossLastAtk = {};
+  BOSSES.forEach(b => { state.bossHp[b.id] = b.maxHp; });
+  if(state.gameMode==='speedrun' && state.prestige===1 && !state.speedrunFinished) {
+    state.speedrunFinished=true;
+    const elapsed=state.speedrunStart?Date.now()-state.speedrunStart:0;
+    if(!state.speedrunBest||elapsed<state.speedrunBest){state.speedrunBest=elapsed;toast('🏆 Neuer Speedrun-Rekord!','gold');}
+    const m=Math.floor(elapsed/60000),s=Math.floor(elapsed%60000/1000);
+    showPopupSimple('⚡','Speedrun Fertig!',`Zeit: ${m}:${String(s).padStart(2,'0')} | Prestige 1 erreicht!`);
+  }
+  toast(`✨ Prestige ${state.prestige}! Dauerhaft stärker.`,'gems');
+  addLog(`✨ Prestige ${state.prestige} erreicht!`,'legendary');
+  save(); renderAll();
 }
 
 // FORMAT
@@ -1727,7 +2803,12 @@ function renderPrestige() {
     {e:'✨',l:'Start-Dust',  v:`${state.prestige*10}`},
   ].map(b=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.9rem;"><span>${b.e} ${b.l}</span><strong style="color:var(--gold)">${b.v}</strong></div>`).join('');
 }
-function renderAll() { updateUI(); renderDungeons(); renderBoxes(); renderShop(); renderInventory(); renderQuests(); renderPrestige(); renderLegend(); renderDailySection(); renderIAP(); renderCraft(); renderDealing(); refreshDealSelects(); }
+function renderAll() {
+  updateUI(); renderDungeons(); renderBoxes(); renderShop(); renderInventory();
+  renderQuests(); renderPrestige(); renderLegend(); renderDailySection(); renderIAP();
+  renderCraft(); renderDealing(); refreshDealSelects();
+  renderRaids(); renderRelics(); renderAchievements(); renderAutoSection(); renderLog();
+}
 
 // POPUP
 function showPopup(flashCls) {
@@ -1758,6 +2839,7 @@ function switchTab(id,btn) {
 
 // TOAST
 function toast(msg,type='') {
+  if(state.settings?.toasts===false && type!=='bad') return;
   const c=document.getElementById('toast-container');
   const el=document.createElement('div');
   el.className=`toast ${type}`; el.textContent=msg; c.appendChild(el);
@@ -1768,11 +2850,21 @@ function toast(msg,type='') {
 setInterval(renderDungeons, 1000);
 setInterval(renderDailySection, 1000);
 setInterval(renderDealing, 5000);
-setInterval(save, 10000);
+setInterval(renderRaids, 1000);
+setInterval(updateSpeedrunTimer, 1000);
+setInterval(()=>{ checkAchievements(); }, 15000);
+setInterval(save, 15000);
 
-// INIT
-load(); initQuests(); initDailyQuests(); initDeals(); checkDailyLogin(); checkQuests(); checkDailyQuests(); renderAll();
-toast('⚔️ Willkommen zurück, Held!','gold');
+// INIT — show login screen once Firebase is ready; fall back after 5s if offline
+let initDone = false;
+// Offline fallback: if Firebase never responds, let player use guest mode
+setTimeout(()=>{
+  if(!initDone && !isGuest && !currentUser) {
+    document.getElementById('login-screen').classList.remove('hidden');
+  }
+}, 5000);
+// If Firebase module already signalled ready before this script reached here
+if(window._firebaseReady) window._onFirebaseReady();
 </script>
 </body>
 </html>
