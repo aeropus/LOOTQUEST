@@ -833,9 +833,6 @@
 
   <div class="section" id="section-iap">
     <div class="section-header"><span class="section-title">💳 Premium Shop</span></div>
-    <div style="background:linear-gradient(135deg,#0a1a00,#001a0a);border:1px solid #44dd8840;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:#60e080;">
-      ⚠️ Dies ist ein Demo-Spiel. Alle Käufe sind simuliert – kein echtes Geld wird verwendet.
-    </div>
     <div class="iap-grid" id="iap-grid"></div>
   </div>
 
@@ -868,7 +865,7 @@
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0;font-size:0.9rem;" id="iap-pop-reward"></div>
     <p style="font-size:0.7rem;color:var(--text-dim);margin-bottom:8px;">Diese Transaktion ist vollständig simuliert. Kein echtes Geld.</p>
     <div class="iap-btn-row">
-      <button class="btn btn-gold" id="iap-confirm-btn" onclick="confirmIAP()">✅ Kaufen (Gratis!)</button>
+      <button class="btn btn-gold" id="iap-confirm-btn" onclick="confirmIAP()">✅ Kaufen</button>
       <button class="btn" style="background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);" onclick="closeIAP()">Abbrechen</button>
     </div>
   </div>
@@ -1119,105 +1116,39 @@ const ITEMS = [
 //  DUNGEONS
 // ============================================================
 const DUNGEONS = [
-  {id:'forest',      name:'Wald',            emoji:'🌲', goldMin:10,    goldMax:30,     xp:20,    cooldown:5,    reqLevel:1,  reqPower:0,
-   drops:['herb','bone','feather','mushroom','sword_old','stick','leaf'],
-   rates:{common:0.70,uncommon:0.25,rare:0.05}},
-  {id:'cave',        name:'Höhle',           emoji:'🕳️', goldMin:25,    goldMax:70,     xp:40,    cooldown:8,    reqLevel:2,  reqPower:5,
-   drops:['pebble','rope','shield_wood','potion','orb','coal','shard'],
-   rates:{common:0.60,uncommon:0.30,rare:0.09,epic:0.01}},
-  {id:'swamp',       name:'Sumpf',           emoji:'🐊', goldMin:50,    goldMax:120,    xp:70,    cooldown:12,   reqLevel:4,  reqPower:15,
-   drops:['mushroom','amulet','boots','magic_staff','ring_silver','worm','bat_wing'],
-   rates:{common:0.50,uncommon:0.30,rare:0.18,epic:0.02}},
-  {id:'graveyard',   name:'Friedhof',        emoji:'⚰️', goldMin:80,    goldMax:200,    xp:100,   cooldown:15,   reqLevel:6,  reqPower:30,
-   drops:['bone','wolf_fang','ghost_cloak','bone_shield','cursed_tome','venom_dagger'],
-   rates:{uncommon:0.40,rare:0.40,epic:0.18,mythic:0.02}},
-  {id:'ruins',       name:'Ruinen',          emoji:'🏚️', goldMin:100,   goldMax:250,    xp:120,   cooldown:20,   reqLevel:7,  reqPower:40,
-   drops:['map','sword_fine','dragon_scale','axe_thunder','crown','runic_axe'],
-   rates:{uncommon:0.30,rare:0.35,epic:0.25,mythic:0.09,legendary:0.01}},
-  {id:'ice_cavern',  name:'Eishöhle',        emoji:'🧊', goldMin:150,   goldMax:380,    xp:180,   cooldown:25,   reqLevel:9,  reqPower:80,
-   drops:['frost_shard','frost_crown','glacial_staff','chain_mail','ice_cavern'],
-   rates:{uncommon:0.20,rare:0.40,epic:0.30,mythic:0.09,legendary:0.01}},
-  {id:'desert_tomb', name:'Wüstengrab',      emoji:'🏜️', goldMin:200,   goldMax:500,    xp:220,   cooldown:30,   reqLevel:11, reqPower:120,
-   drops:['sun_crown','star_blade','storm_blade','shadow_blade','blood_staff'],
-   rates:{rare:0.25,epic:0.40,mythic:0.30,legendary:0.05}},
-  {id:'volcano',     name:'Vulkan',          emoji:'🌋', goldMin:250,   goldMax:600,    xp:250,   cooldown:40,   reqLevel:12, reqPower:200,
-   drops:['grimoire','phoenix_feather','hellblade','voidstaff','titan_shield','lava_shield'],
-   rates:{rare:0.20,epic:0.35,mythic:0.35,legendary:0.10}},
-  {id:'sky_citadel', name:'Himmelszitadelle',emoji:'🏰', goldMin:400,   goldMax:900,    xp:400,   cooldown:55,   reqLevel:15, reqPower:350,
-   drops:['excalibur','holy_grail','star_crown','genesis_sword','sun_crown','titan_heart'],
-   rates:{epic:0.20,mythic:0.35,legendary:0.40,chromatic:0.05}},
-  {id:'shadow_realm',name:'Schattenreich',   emoji:'🌑', goldMin:600,   goldMax:1400,   xp:600,   cooldown:70,   reqLevel:18, reqPower:600,
-   drops:['abyss_blade','phantom_blade','cursed_crown','reaper_blade','void_crown'],
-   rates:{epic:0.15,mythic:0.40,legendary:0.35,chromatic:0.10}},
-  {id:'dragon_lair', name:'Drachenhöhle',   emoji:'🐉', goldMin:500,   goldMax:1500,   xp:600,   cooldown:90,   reqLevel:20, reqPower:500,
-   drops:['deathmask','excalibur','holy_grail','infinity_ring','dragon_egg','dragon_fang'],
-   rates:{epic:0.15,mythic:0.35,legendary:0.40,chromatic:0.10}},
-  {id:'astral_plane',name:'Astralebene',     emoji:'🌌', goldMin:1000,  goldMax:3000,   xp:1200,  cooldown:120,  reqLevel:25, reqPower:1200,
-   drops:['cosmos_orb','astral_staff','cosmic_orb','fractal_blade','aurora_staff','arc_staff'],
-   rates:{mythic:0.20,legendary:0.40,chromatic:0.35,secret:0.05}},
-  {id:'void_rift',   name:'Leerenriss',     emoji:'🌀', goldMin:2000,  goldMax:8000,   xp:2000,  cooldown:180,  reqLevel:30, reqPower:2000,
-   drops:['prism_sword','chaos_orb','spectrum_bow','void_heart','null_blade','rainbow_blade'],
-   rates:{legendary:0.25,chromatic:0.50,secret:0.25}},
-  {id:'titan_forge', name:'Titanenschmiede',emoji:'⚒️', goldMin:5000,  goldMax:20000,  xp:5000,  cooldown:300,  reqLevel:40, reqPower:5000,
-   drops:['cosmos_destroyer','antimatter_orb','null_crown','void_eye_sec','endless_void'],
-   rates:{chromatic:0.30,secret:0.70}},
-  {id:'dimension_x', name:'Dimension X',    emoji:'🔀', goldMin:8000,  goldMax:35000,  xp:8000,  cooldown:480,  reqLevel:45, reqPower:8000,
-   drops:['zero_point','time_void','abyss_crown','phantom_eye','anti_crown','null_ring'],
-   rates:{chromatic:0.20,secret:0.80}},
-  {id:'null_sanctum',name:'Nullheiligtum',  emoji:'⬛', goldMin:10000, goldMax:50000,  xp:10000, cooldown:600,  reqLevel:50, reqPower:10000,
-   drops:['void_heart','null_blade','echo_crown','cosmos_destroyer','endless_void'],
-   rates:{chromatic:0.10,secret:0.90}},
-  // ---- 8 NEW DUNGEONS ----
-  {id:'crystal_caves', name:'Kristallhöhlen',  emoji:'💎', goldMin:60,    goldMax:160,    xp:90,    cooldown:10,   reqLevel:3,  reqPower:8,
-   drops:['cave_gem','shard','orb','ring_silver','crystal_staff'],
-   rates:{common:0.40,uncommon:0.35,rare:0.22,epic:0.03}},
-  {id:'haunted_manor', name:'Geisterpalast',   emoji:'🏚️', goldMin:120,   goldMax:300,    xp:140,   cooldown:18,   reqLevel:8,  reqPower:50,
-   drops:['ghost_cloak','bone_shield','cursed_tome','spectral_bow','soul_ring'],
-   rates:{uncommon:0.25,rare:0.40,epic:0.28,mythic:0.07}},
-  {id:'thunderpeak',   name:'Donnergipfel',    emoji:'⛰️', goldMin:180,   goldMax:450,    xp:200,   cooldown:28,   reqLevel:10, reqPower:100,
-   drops:['storm_blade','thunder_helm','axe_thunder','chaos_axe','thunder_crown'],
-   rates:{uncommon:0.15,rare:0.35,epic:0.35,mythic:0.14,legendary:0.01}},
-  {id:'sunken_temple', name:'Versunkener Tempel',emoji:'🏛️',goldMin:320,  goldMax:750,    xp:320,   cooldown:45,   reqLevel:14, reqPower:280,
-   drops:['fate_staff','sun_crown','divine_ring','cosmos_orb','astral_staff'],
-   rates:{rare:0.15,epic:0.30,mythic:0.35,legendary:0.20}},
-  {id:'frozen_wastes', name:'Gefrorene Ödnis',  emoji:'🌨️', goldMin:500,   goldMax:1200,   xp:500,   cooldown:60,   reqLevel:16, reqPower:450,
-   drops:['glacial_staff','frost_crown','eternity_cloak','aeons_shield','void_crown'],
-   rates:{epic:0.20,mythic:0.40,legendary:0.35,chromatic:0.05}},
-  {id:'lava_labyrinth',name:'Lava-Labyrinth',   emoji:'🔴', goldMin:900,   goldMax:2500,   xp:900,   cooldown:100,  reqLevel:22, reqPower:800,
-   drops:['inferno_bow','lava_shield','magma_shield','reaper_blade','phoenix_heart'],
-   rates:{epic:0.10,mythic:0.40,legendary:0.40,chromatic:0.10}},
-  {id:'nightmare_realm',name:'Albtraumreich',   emoji:'😱', goldMin:3000,  goldMax:12000,  xp:3000,  cooldown:240,  reqLevel:35, reqPower:3500,
-   drops:['null_heart','dead_star','abyss_crown','phantom_eye','endless_void'],
-   rates:{legendary:0.10,chromatic:0.40,secret:0.50}},
-  {id:'cosmos_rift',   name:'Kosmos-Riss',      emoji:'🌠', goldMin:20000, goldMax:100000, xp:20000, cooldown:900,  reqLevel:60, reqPower:20000,
-   drops:['cosmos_destroyer','endless_void','time_void','zero_point','anti_crown'],
-   rates:{secret:1.0}},
-  // ---- 8 MORE DUNGEONS (total 32) ----
-  {id:'plague_fields',  name:'Seuchenfelder',     emoji:'🌫️', goldMin:35,    goldMax:90,     xp:55,    cooldown:7,    reqLevel:3,  reqPower:10,
-   drops:['worm','mushroom','bat_wing','spider_silk','venom_dagger','plague_mask'],
-   rates:{common:0.55,uncommon:0.30,rare:0.13,epic:0.02}},
-  {id:'storm_peaks',    name:'Sturmgipfel',        emoji:'⛈️', goldMin:140,   goldMax:340,    xp:160,   cooldown:22,   reqLevel:9,  reqPower:70,
-   drops:['storm_gem','storm_blade','thunder_helm','thunder_crown','chaos_axe'],
-   rates:{uncommon:0.20,rare:0.40,epic:0.30,mythic:0.10}},
-  {id:'abyssal_sea',    name:'Abyssale See',       emoji:'🌊', goldMin:280,   goldMax:700,    xp:280,   cooldown:38,   reqLevel:13, reqPower:220,
-   drops:['glacial_staff','vortex_orb','phantom_blade','soul_lantern','aeons_shield'],
-   rates:{rare:0.20,epic:0.30,mythic:0.38,legendary:0.12}},
-  {id:'eldritch_tower', name:'Eldritch-Turm',      emoji:'🗼', goldMin:450,   goldMax:1100,   xp:450,   cooldown:65,   reqLevel:17, reqPower:550,
-   drops:['cursed_crown','elder_staff','elder_blade','elder_rune','void_eye'],
-   rates:{epic:0.15,mythic:0.45,legendary:0.35,chromatic:0.05}},
-  {id:'mirror_realm',   name:'Spiegelreich',       emoji:'🪞', goldMin:700,   goldMax:1800,   xp:700,   cooldown:85,   reqLevel:19, reqPower:700,
-   drops:['mirror_shield','iris_blade','void_prism','spectrum_eye','hue_dagger'],
-   rates:{epic:0.10,mythic:0.35,legendary:0.35,chromatic:0.20}},
-  {id:'time_fracture',  name:'Zeitbruch',          emoji:'⌛', goldMin:1500,  goldMax:5000,   xp:1500,  cooldown:150,  reqLevel:28, reqPower:1800,
-   drops:['time_void','eternity_cloak','omega_bow','astral_staff','cosmos_orb'],
-   rates:{mythic:0.15,legendary:0.40,chromatic:0.35,secret:0.10}},
-  {id:'forgotten_city', name:'Vergessene Stadt',   emoji:'🏙️', goldMin:4000,  goldMax:15000,  xp:4000,  cooldown:360,  reqLevel:38, reqPower:4000,
-   drops:['forgotten_blade','beyond_shield','inverse_ring','null_ring','phantom_eye'],
-   rates:{chromatic:0.25,secret:0.75}},
-  {id:'end_of_all',     name:'Ende aller Dinge',   emoji:'💥', goldMin:50000, goldMax:250000, xp:50000, cooldown:1800, reqLevel:75, reqPower:50000,
-   drops:['cosmos_destroyer','endless_void','null_blade','void_heart','echo_crown'],
-   rates:{secret:1.0}},
-];
+  { id: 'forest', name: 'Wald', emoji: '🌲', goldMin: 10, goldMax: 30, xp: 20, cooldown: 5, reqLevel: 1, reqPower: 0, drops: ['herb', 'bone', 'feather', 'mushroom', 'sword_old', 'stick', 'leaf'], rates: { common: 0.70, uncommon: 0.25, rare: 0.05 } },
+  { id: 'cave', name: 'Höhle', emoji: '🕳️', goldMin: 25, goldMax: 70, xp: 40, cooldown: 8, reqLevel: 2, reqPower: 5, drops: ['pebble', 'rope', 'shield_wood', 'potion', 'orb', 'coal', 'shard'], rates: { common: 0.60, uncommon: 0.30, rare: 0.09, epic: 0.01 } },
+  { id: 'crystal_caves', name: 'Kristallhöhlen', emoji: '💎', goldMin: 60, goldMax: 160, xp: 90, cooldown: 10, reqLevel: 3, reqPower: 8, drops: ['cave_gem', 'shard', 'orb', 'ring_silver', 'crystal_staff'], rates: { common: 0.40, uncommon: 0.35, rare: 0.22, epic: 0.03 } },
+  { id: 'plague_fields', name: 'Seuchenfelder', emoji: '🌫️', goldMin: 35, goldMax: 90, xp: 55, cooldown: 7, reqLevel: 3, reqPower: 10, drops: ['worm', 'mushroom', 'bat_wing', 'spider_silk', 'venom_dagger', 'plague_mask'], rates: { common: 0.55, uncommon: 0.30, rare: 0.13, epic: 0.02 } },
+  { id: 'swamp', name: 'Sumpf', emoji: '🐊', goldMin: 50, goldMax: 120, xp: 70, cooldown: 12, reqLevel: 4, reqPower: 15, drops: ['mushroom', 'amulet', 'boots', 'magic_staff', 'ring_silver', 'worm', 'bat_wing'], rates: { common: 0.50, uncommon: 0.30, rare: 0.18, epic: 0.02 } },
+  { id: 'graveyard', name: 'Friedhof', emoji: '⚰️', goldMin: 80, goldMax: 200, xp: 100, cooldown: 15, reqLevel: 6, reqPower: 30, drops: ['bone', 'wolf_fang', 'ghost_cloak', 'bone_shield', 'cursed_tome', 'venom_dagger'], rates: { uncommon: 0.40, rare: 0.40, epic: 0.18, mythic: 0.02 } },
+  { id: 'ruins', name: 'Ruinen', emoji: '🏚️', goldMin: 100, goldMax: 250, xp: 120, cooldown: 20, reqLevel: 7, reqPower: 40, drops: ['map', 'sword_fine', 'dragon_scale', 'axe_thunder', 'crown', 'runic_axe'], rates: { uncommon: 0.30, rare: 0.35, epic: 0.25, mythic: 0.09, legendary: 0.01 } },
+  { id: 'haunted_manor', name: 'Geisterpalast', emoji: '🏚️', goldMin: 120, goldMax: 300, xp: 140, cooldown: 18, reqLevel: 8, reqPower: 50, drops: ['ghost_cloak', 'bone_shield', 'cursed_tome', 'spectral_bow', 'soul_ring'], rates: { uncommon: 0.25, rare: 0.40, epic: 0.28, mythic: 0.07 } },
+  { id: 'ice_cavern', name: 'Eishöhle', emoji: '🧊', goldMin: 150, goldMax: 380, xp: 180, cooldown: 25, reqLevel: 9, reqPower: 80, drops: ['frost_shard', 'frost_crown', 'glacial_staff', 'chain_mail', 'ice_cavern'], rates: { uncommon: 0.20, rare: 0.40, epic: 0.30, mythic: 0.09, legendary: 0.01 } },
+  { id: 'storm_peaks', name: 'Sturmgipfel', emoji: '⛈️', goldMin: 140, goldMax: 340, xp: 160, cooldown: 22, reqLevel: 9, reqPower: 70, drops: ['storm_gem', 'storm_blade', 'thunder_helm', 'thunder_crown', 'chaos_axe'], rates: { uncommon: 0.20, rare: 0.40, epic: 0.30, mythic: 0.10 } },
+  { id: 'thunderpeak', name: 'Donnergipfel', emoji: '⛰️', goldMin: 180, goldMax: 450, xp: 200, cooldown: 28, reqLevel: 10, reqPower: 100, drops: ['storm_blade', 'thunder_helm', 'axe_thunder', 'chaos_axe', 'thunder_crown'], rates: { uncommon: 0.15, rare: 0.35, epic: 0.35, mythic: 0.14, legendary: 0.01 } },
+  { id: 'desert_tomb', name: 'Wüstengrab', emoji: '🏜️', goldMin: 200, goldMax: 500, xp: 220, cooldown: 30, reqLevel: 11, reqPower: 120, drops: ['sun_crown', 'star_blade', 'storm_blade', 'shadow_blade', 'blood_staff'], rates: { rare: 0.25, epic: 0.40, mythic: 0.30, legendary: 0.05 } },
+  { id: 'volcano', name: 'Vulkan', emoji: '🌋', goldMin: 250, goldMax: 600, xp: 250, cooldown: 40, reqLevel: 12, reqPower: 200, drops: ['grimoire', 'phoenix_feather', 'hellblade', 'voidstaff', 'titan_shield', 'lava_shield'], rates: { rare: 0.20, epic: 0.35, mythic: 0.35, legendary: 0.10 } },
+  { id: 'abyssal_sea', name: 'Abyssale See', emoji: '🌊', goldMin: 280, goldMax: 700, xp: 280, cooldown: 38, reqLevel: 13, reqPower: 220, drops: ['glacial_staff', 'vortex_orb', 'phantom_blade', 'soul_lantern', 'aeons_shield'], rates: { rare: 0.20, epic: 0.30, mythic: 0.38, legendary: 0.12 } },
+  { id: 'sunken_temple', name: 'Versunkener Tempel', emoji: '🏛️', goldMin: 320, goldMax: 750, xp: 320, cooldown: 45, reqLevel: 14, reqPower: 280, drops: ['fate_staff', 'sun_crown', 'divine_ring', 'cosmos_orb', 'astral_staff'], rates: { rare: 0.15, epic: 0.30, mythic: 0.35, legendary: 0.20 } },
+  { id: 'sky_citadel', name: 'Himmelszitadelle', emoji: '🏰', goldMin: 400, goldMax: 900, xp: 400, cooldown: 55, reqLevel: 15, reqPower: 350, drops: ['excalibur', 'holy_grail', 'star_crown', 'genesis_sword', 'sun_crown', 'titan_heart'], rates: { epic: 0.20, mythic: 0.35, legendary: 0.40, chromatic: 0.05 } },
+  { id: 'frozen_wastes', name: 'Gefrorene Ödnis', emoji: '🌨️', goldMin: 500, goldMax: 1200, xp: 500, cooldown: 60, reqLevel: 16, reqPower: 450, drops: ['glacial_staff', 'frost_crown', 'eternity_cloak', 'aeons_shield', 'void_crown'], rates: { epic: 0.20, mythic: 0.40, legendary: 0.35, chromatic: 0.05 } },
+  { id: 'eldritch_tower', name: 'Eldritch-Turm', emoji: '🗼', goldMin: 450, goldMax: 1100, xp: 450, cooldown: 65, reqLevel: 17, reqPower: 550, drops: ['cursed_crown', 'elder_staff', 'elder_blade', 'elder_rune', 'void_eye'], rates: { epic: 0.15, mythic: 0.45, legendary: 0.35, chromatic: 0.05 } },
+  { id: 'shadow_realm', name: 'Schattenreich', emoji: '🌑', goldMin: 600, goldMax: 1400, xp: 600, cooldown: 70, reqLevel: 18, reqPower: 600, drops: ['abyss_blade', 'phantom_blade', 'cursed_crown', 'reaper_blade', 'void_crown'], rates: { epic: 0.15, mythic: 0.40, legendary: 0.35, chromatic: 0.10 } },
+  { id: 'mirror_realm', name: 'Spiegelreich', emoji: '🪞', goldMin: 700, goldMax: 1800, xp: 700, cooldown: 85, reqLevel: 19, reqPower: 700, drops: ['mirror_shield', 'iris_blade', 'void_prism', 'spectrum_eye', 'hue_dagger'], rates: { epic: 0.10, mythic: 0.35, legendary: 0.35, chromatic: 0.20 } },
+  { id: 'dragon_lair', name: 'Drachenhöhle', emoji: '🐉', goldMin: 500, goldMax: 1500, xp: 600, cooldown: 90, reqLevel: 20, reqPower: 500, drops: ['deathmask', 'excalibur', 'holy_grail', 'infinity_ring', 'dragon_egg', 'dragon_fang'], rates: { epic: 0.15, mythic: 0.35, legendary: 0.40, chromatic: 0.10 } },
+  { id: 'lava_labyrinth', name: 'Lava-Labyrinth', emoji: '🔴', goldMin: 900, goldMax: 2500, xp: 900, cooldown: 100, reqLevel: 22, reqPower: 800, drops: ['inferno_bow', 'lava_shield', 'magma_shield', 'reaper_blade', 'phoenix_heart'], rates: { epic: 0.10, mythic: 0.40, legendary: 0.40, chromatic: 0.10 } },
+  { id: 'astral_plane', name: 'Astralebene', emoji: '🌌', goldMin: 1000, goldMax: 3000, xp: 1200, cooldown: 120, reqLevel: 25, reqPower: 1200, drops: ['cosmos_orb', 'astral_staff', 'cosmic_orb', 'fractal_blade', 'aurora_staff', 'arc_staff'], rates: { mythic: 0.20, legendary: 0.40, chromatic: 0.35, secret: 0.05 } },
+  { id: 'time_fracture', name: 'Zeitbruch', emoji: '⌛', goldMin: 1500, goldMax: 5000, xp: 1500, cooldown: 150, reqLevel: 28, reqPower: 1800, drops: ['time_void', 'eternity_cloak', 'omega_bow', 'astral_staff', 'cosmos_orb'], rates: { mythic: 0.15, legendary: 0.40, chromatic: 0.35, secret: 0.10 } },
+  { id: 'void_rift', name: 'Leerenriss', emoji: '🌀', goldMin: 2000, goldMax: 8000, xp: 2000, cooldown: 180, reqLevel: 30, reqPower: 2000, drops: ['prism_sword', 'chaos_orb', 'spectrum_bow', 'void_heart', 'null_blade', 'rainbow_blade'], rates: { legendary: 0.25, chromatic: 0.50, secret: 0.25 } },
+  { id: 'nightmare_realm', name: 'Albtraumreich', emoji: '😱', goldMin: 3000, goldMax: 12000, xp: 3000, cooldown: 240, reqLevel: 35, reqPower: 3500, drops: ['null_heart', 'dead_star', 'abyss_crown', 'phantom_eye', 'endless_void'], rates: { legendary: 0.10, chromatic: 0.40, secret: 0.50 } },
+  { id: 'forgotten_city', name: 'Vergessene Stadt', emoji: '🏙️', goldMin: 4000, goldMax: 15000, xp: 4000, cooldown: 360, reqLevel: 38, reqPower: 4000, drops: ['forgotten_blade', 'beyond_shield', 'inverse_ring', 'null_ring', 'phantom_eye'], rates: { chromatic: 0.25, secret: 0.75 } },
+  { id: 'titan_forge', name: 'Titanenschmiede', emoji: '⚒️', goldMin: 5000, goldMax: 20000, xp: 5000, cooldown: 300, reqLevel: 40, reqPower: 5000, drops: ['cosmos_destroyer', 'antimatter_orb', 'null_crown', 'void_eye_sec', 'endless_void'], rates: { chromatic: 0.30, secret: 0.70 } },
+  { id: 'dimension_x', name: 'Dimension X', emoji: '🔀', goldMin: 8000, goldMax: 35000, xp: 8000, cooldown: 480, reqLevel: 45, reqPower: 8000, drops: ['zero_point', 'time_void', 'abyss_crown', 'phantom_eye', 'anti_crown', 'null_ring'], rates: { chromatic: 0.20, secret: 0.80 } },
+  { id: 'null_sanctum', name: 'Nullheiligtum', emoji: '⬛', goldMin: 10000, goldMax: 50000, xp: 10000, cooldown: 600, reqLevel: 50, reqPower: 10000, drops: ['void_heart', 'null_blade', 'echo_crown', 'cosmos_destroyer', 'endless_void'], rates: { chromatic: 0.10, secret: 0.90 } },
+  { id: 'cosmos_rift', name: 'Kosmos-Riss', emoji: '🌠', goldMin: 20000, goldMax: 100000, xp: 20000, cooldown: 900, reqLevel: 60, reqPower: 20000, drops: ['cosmos_destroyer', 'endless_void', 'time_void', 'zero_point', 'anti_crown'], rates: { secret: 1.0 } },
+  { id: 'end_of_all', name: 'Ende aller Dinge', emoji: '💥', goldMin: 50000, goldMax: 250000, xp: 50000, cooldown: 1800, reqLevel: 75, reqPower: 50000, drops: ['cosmos_destroyer', 'endless_void', 'null_blade', 'void_heart', 'echo_crown'], rates: { secret: 1.0 } }
+];];
 
 // ============================================================
 //  BOXES
@@ -1906,7 +1837,7 @@ function renderIAP() {
       <div class="iap-name">${it.name}</div>
       <div class="iap-contents">${it.contents}</div>
       <div class="iap-price">${it.price}</div>
-      <div class="iap-disclaimer">Demo – kein echtes Geld</div>
+      <div class="iap-disclaimer"></div>
     </div>`).join('');
 }
 function openIAP(id) {
