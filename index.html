@@ -10,10 +10,10 @@
 <title>LootQuest ⚔️</title>
 <link rel="manifest" href="data:application/json,{}">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<!-- Firebase -->
+<!-- Firebase Realtime DB – kein Auth, nur Datenspeicher -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-  import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+  import { getDatabase, ref, set, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyCjnQp7oG33hCeCnJo8v_Mn2cYmCptFyJM",
@@ -26,17 +26,11 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const db  = getDatabase(app);
 
-  // Expose DB helpers — no Firebase Auth needed
-  window._fbDb  = db;
-  window._fbRef = ref;
-  window._fbSet = set;
-  window._fbGet = get;
-
-  // Signal Firebase is ready
-  if(window._onFirebaseReady) window._onFirebaseReady();
-  else window._firebaseReady = true;
+  window._fb = { db, ref, set, get, update };
+  window._fbReady = true;
+  if(window._onFbReady) window._onFbReady();
 </script>
 <style>
   :root {
@@ -554,6 +548,93 @@
   body.mode-speedrun header { border-bottom-color: #4488ff80; }
   .speedrun-timer { font-family: 'Cinzel Decorative', serif; font-size: 0.75rem; color: #4488ff; letter-spacing: 1px; }
 
+  /* ===== SEASON PASS ===== */
+  .pass-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .pass-meta { font-size:0.78rem; color:var(--text-dim); }
+  .pass-reset-info { font-size:0.72rem; color:#a07aff; margin-top:2px; }
+  .pass-xp-bar-wrap { background:var(--bg); border:1px solid var(--border); border-radius:8px; height:14px; margin-bottom:20px; overflow:hidden; position:relative; }
+  .pass-xp-bar-fill { height:100%; background:linear-gradient(90deg,#7b2fff,#c040f0,#ff40a0); transition:width 0.6s; border-radius:8px; box-shadow:0 0 10px #c040f080; }
+  .pass-xp-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#fff; font-weight:700; letter-spacing:1px; mix-blend-mode:difference; }
+
+  /* Horizontal scroll track */
+  .pass-track-wrap { overflow-x:auto; overflow-y:visible; padding-bottom:12px; margin:0 -4px; }
+  .pass-track-wrap::-webkit-scrollbar { height:6px; }
+  .pass-track-wrap::-webkit-scrollbar-track { background:var(--bg); border-radius:3px; }
+  .pass-track-wrap::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  .pass-track { display:flex; flex-direction:row; gap:0; width:max-content; padding:4px 4px 4px 4px; }
+
+  /* Each column = one level */
+  .pass-col { display:flex; flex-direction:column; align-items:center; width:130px; flex-shrink:0; position:relative; }
+
+  /* Connector line between cols */
+  .pass-col:not(:last-child)::after {
+    content:''; position:absolute; top:50%; left:calc(100% - 1px);
+    width:1px; height:2px; background:var(--border); z-index:0;
+  }
+
+  /* Level number bubble in the middle */
+  .pass-col-num {
+    width:36px; height:36px; border-radius:50%;
+    background:var(--bg2); border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel Decorative',serif; font-size:0.6rem; color:var(--text-dim);
+    margin:6px 0; z-index:1; flex-shrink:0; transition:all 0.2s;
+  }
+  .pass-col.col-unlocked .pass-col-num {
+    border-color:#c040f0; color:#c040f0; box-shadow:0 0 8px #c040f060;
+  }
+  .pass-col.col-current .pass-col-num {
+    background:linear-gradient(135deg,#7b2fff,#c040f0);
+    border-color:#c040f0; color:#fff;
+    box-shadow:0 0 14px #c040f080;
+    animation:mythic-pulse 1.8s ease-in-out infinite;
+  }
+
+  /* Horizontal connector line */
+  .pass-connector { position:absolute; top:50%; left:65px; right:-65px; height:2px; background:var(--border); z-index:0; transform:translateY(-50%); }
+  .pass-connector.done { background:linear-gradient(90deg,#7b2fff,#c040f080); }
+
+  /* Reward cards */
+  .pass-card {
+    width:114px; background:var(--bg3); border:1px solid var(--border);
+    border-radius:10px; padding:10px 8px; text-align:center;
+    position:relative; z-index:1; transition:all 0.2s; flex-shrink:0;
+  }
+  .pass-card.card-free { border-color:#f0c04050; }
+  .pass-card.card-pro  { border-color:#7b2fff50; }
+  .pass-card.card-unlocked { border-color:#c040f080; box-shadow:0 0 10px #c040f025; }
+  .pass-card.card-claimed  { opacity:0.55; }
+
+  .pass-card .pc-label {
+    font-size:0.55rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:5px;
+  }
+  .pass-card.card-free .pc-label { color:var(--gold); }
+  .pass-card.card-pro  .pc-label { color:#a07aff; }
+  .pass-card .pc-emoji { font-size:1.6rem; display:block; margin-bottom:4px; }
+  .pass-card .pc-name  { font-size:0.68rem; color:var(--text); font-weight:600; margin-bottom:3px; line-height:1.2; }
+  .pass-card .pc-reward{ font-size:0.62rem; color:var(--text-dim); margin-bottom:6px; }
+
+  .pass-claim-btn { padding:4px 10px; background:linear-gradient(135deg,#7b2fff,#c040f0); border:none; border-radius:6px; color:#fff; font-weight:700; font-size:0.7rem; cursor:pointer; font-family:'Crimson Pro',serif; transition:all 0.2s; }
+  .pass-claim-btn:hover { transform:scale(1.05); box-shadow:var(--glow-gems); }
+  .pass-claim-btn.btn-free { background:linear-gradient(135deg,#c89a10,#f0c040); color:#1a0800; }
+  .pass-claimed-mark { font-size:1rem; }
+  .pass-locked-mark { font-size:0.62rem; color:var(--text-dim); }
+
+  /* Row labels on the left */
+  .pass-row-labels { display:flex; flex-direction:column; align-items:flex-end; padding-right:8px; flex-shrink:0; }
+  .pass-row-label-free { height:136px; display:flex; align-items:center; justify-content:flex-end; }
+  .pass-row-label-mid  { height:48px; display:flex; align-items:center; justify-content:flex-end; }
+  .pass-row-label-pro  { height:136px; display:flex; align-items:center; justify-content:flex-end; }
+  .pass-row-tag { font-size:0.62rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; writing-mode:vertical-rl; transform:rotate(180deg); padding:4px 3px; border-radius:4px; }
+  .pass-row-tag.tag-free { color:var(--gold); border:1px solid #f0c04040; background:#f0c04010; }
+  .pass-row-tag.tag-pro  { color:#a07aff; border:1px solid #7b2fff40; background:#7b2fff10; }
+
+  .pass-scroll-outer { display:flex; align-items:stretch; overflow-x:auto; overflow-y:visible; padding-bottom:12px; }
+  .pass-scroll-outer::-webkit-scrollbar { height:6px; }
+  .pass-scroll-outer::-webkit-scrollbar-track { background:var(--bg); border-radius:3px; }
+  .pass-scroll-outer::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
 </style>
 </head>
 <body>
@@ -562,30 +643,17 @@
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">⚔️ LootQuest</div>
-    <div class="login-sub">Dein episches Abenteuer wartet</div>
-    <!--<div class="login-tabs">
-      <button class="login-tab active" onclick="switchLoginTab('login')">Anmelden</button>
-      <button class="login-tab" onclick="switchLoginTab('register')">Registrieren</button>
-    </div>
+    <div class="login-sub">Wähle einen Heldennamen – kein Passwort nötig!</div>
     <div id="login-error" class="login-error"></div>
     <div class="login-field">
-      <label>Benutzername</label>
-      <input type="text" id="login-email" placeholder="mein_held" autocomplete="username" maxlength="30">
+      <label>Heldenname</label>
+      <input type="text" id="login-username-input" placeholder="mein_held" autocomplete="username" maxlength="24"
+             onkeydown="if(event.key==='Enter')doLogin()" style="text-transform:lowercase">
     </div>
-    <div class="login-field">
-      <label>Passwort</label>
-      <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div class="login-field" id="register-username-field" style="display:none">
-      <label>Anzeigename (optional)</label>
-      <input type="text" id="login-username" placeholder="Dein Heldenname" maxlength="30">
-    </div>
-    <button class="login-btn" onclick="doLogin()" id="login-main-btn">⚔️ Anmelden</button>-->
-    <!--<label>Bitte als Gast spielen. Wir arbeiten am Online Mode!</label>-->
-    <!--<button class="login-btn guest" onclick="doGuest()">👤 Als Gast spielen</button>-->
-    <label>Klicke "Starten" um loszulegen</label>
-    <button class="login-btn guest" onclick="doGuest()">Starten</button>
-    <div class="login-loot-id">Kein E-Mail nötig – nur Benutzername & Passwort.<br>Deine <span>LootID</span> wird automatisch vergeben.</div>
+    <div id="login-status" style="font-size:0.75rem;color:var(--text-dim);min-height:18px;margin-bottom:8px;text-align:center;"></div>
+    <button class="login-btn" onclick="doLogin()" id="login-main-btn">⚔️ Starten</button>
+    <button class="login-btn guest" onclick="doGuest()" style="margin-top:6px;">👤 Als Gast spielen (nur lokal)</button>
+    <div class="login-loot-id" style="margin-top:12px;">Dein Spielstand wird <strong style="color:var(--gold)">online gespeichert</strong> – überall spielbar!<br>Gast-Modus speichert nur lokal.</div>
   </div>
 </div>
 
@@ -611,10 +679,6 @@
     <div class="settings-row">
       <div><div class="settings-label">🔔 Toast-Meldungen</div><div class="settings-sub" id="toast-setting-sub">Alle Meldungen an</div></div>
       <div class="toggle-switch" id="toast-toggle" onclick="toggleSetting('toasts')" style="flex-shrink:0"></div>
-    </div>
-    <div class="settings-row">
-      <div><div class="settings-label">💾 Cloud-Sync</div><div class="settings-sub" id="sync-setting-sub">Automatisch</div></div>
-      <div class="toggle-switch" id="sync-toggle" onclick="toggleSetting('cloudSync')" style="flex-shrink:0"></div>
     </div>
     <div class="settings-row">
       <div><div class="settings-label">🌙 Kompakt-Modus</div><div class="settings-sub">Kleinere UI-Elemente</div></div>
@@ -663,6 +727,7 @@
   <button class="tab" onclick="switchTab('log',this)">📋 Log</button>
   <button class="tab" onclick="switchTab('iap',this)">💳 Shop+</button>
   <button class="tab" onclick="switchTab('prestige',this)">⭐ Prestige</button>
+  <button class="tab" onclick="switchTab('pass',this)">🎫 Season Pass</button>
 </div>
 
 <main>
@@ -847,6 +912,35 @@
       <button class="btn btn-gems" id="prestige-btn" onclick="doPrestige()" style="margin-top:12px;">✨ Prestige ausführen</button>
     </div>
     <div class="panel"><div class="panel-title">🏆 Prestige-Boni</div><div id="prestige-bonuses"></div></div>
+  </div>
+  <div class="section" id="section-pass">
+    <div class="section-header">
+      <span class="section-title">🎫 Season Pass</span>
+      <span class="badge" id="pass-progress-badge">Stufe 1</span>
+    </div>
+    <div class="panel">
+      <div class="pass-header">
+        <div>
+          <div class="panel-title" style="margin-bottom:2px;">✨ Monatlicher Pass</div>
+          <div class="pass-meta" id="pass-meta-text">Sammle XP durch Quests &amp; Dungeons!</div>
+          <div class="pass-reset-info" id="pass-reset-text">🔄 Reset am 11. jeden Monats</div>
+        </div>
+        <div id="pass-level-display" style="font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:#c040f0;text-shadow:0 0 15px #c040f080;">Stufe <span id="pass-level-num">1</span></div>
+      </div>
+      <div class="pass-xp-bar-wrap">
+        <div class="pass-xp-bar-fill" id="pass-xp-bar" style="width:0%"></div>
+        <div class="pass-xp-label" id="pass-xp-label">0 / 300 XP</div>
+      </div>
+      <!-- Battle-pass scroll: Free row top, level numbers middle, Pro row bottom -->
+      <div class="pass-scroll-outer" id="pass-scroll-outer">
+        <div class="pass-row-labels">
+          <div class="pass-row-label-free"><span class="pass-row-tag tag-free">Free</span></div>
+          <div class="pass-row-label-mid"></div>
+          <div class="pass-row-label-pro"><span class="pass-row-tag tag-pro">Pro</span></div>
+        </div>
+        <div class="pass-track" id="pass-tier-grid"></div>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -1225,100 +1319,82 @@ let state = {
 // ============================================================
 //  AUTH / LOOT-ID / FIREBASE
 // ============================================================
-let currentUser = null;
+let currentUser = null;  // string (username) or null
 let lootId = null;
 let isGuest = false;
 let loginTab = 'login';
 
-// Hash helper – SHA-256 via Web Crypto, returns hex string
-async function sha256hex(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+// ============================================================
+//  AUTH / LOGIN  (Username-only, kein Passwort, Firebase DB)
+// ============================================================
 
-// Derive a short display ID from the username
 function getLootId(username) {
   let h = 0;
-  for(let i=0;i<username.length;i++) { h = ((h<<5)-h) + username.charCodeAt(i); h |= 0; }
+  for(let i=0;i<username.length;i++) { h=((h<<5)-h)+username.charCodeAt(i); h|=0; }
   return 'LQ-' + Math.abs(h).toString(16).toUpperCase().padStart(6,'0');
 }
 
-function switchLoginTab(tab) {
-  loginTab = tab;
-  document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',i===(tab==='login'?0:1)));
-  document.getElementById('register-username-field').style.display = tab==='register'?'block':'none';
-  document.getElementById('login-main-btn').textContent = tab==='login'?'⚔️ Anmelden':'⚔️ Registrieren';
-  document.getElementById('login-error').textContent = '';
-}
-
 async function doLogin() {
-  const usernameRaw = document.getElementById('login-email').value.trim();   // field reused for username
-  const pw          = document.getElementById('login-pw').value;
-  const errEl       = document.getElementById('login-error');
-  errEl.textContent = '';
+  const raw   = (document.getElementById('login-username-input')?.value || '').trim();
+  const errEl = document.getElementById('login-error');
+  const statEl= document.getElementById('login-status');
+  if(errEl) errEl.textContent = '';
 
-  if(!usernameRaw || !pw) { errEl.textContent = 'Benutzername und Passwort eingeben!'; return; }
+  const username = raw.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,24);
+  if(!username) { if(errEl) errEl.textContent = 'Bitte einen Heldennamen eingeben (a-z, 0-9, _).'; return; }
 
-  // Sanitise: lowercase, no spaces, max 30 chars
-  const username = usernameRaw.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,30);
-  if(!username) { errEl.textContent = 'Ungültiger Benutzername (nur a-z, 0-9, _).'; return; }
+  const btn = document.getElementById('login-main-btn');
+  if(btn) { btn.disabled=true; btn.textContent='⏳ Lade…'; }
+  if(statEl) statEl.textContent = 'Verbinde mit Server…';
 
   try {
-    const pwHash = await sha256hex(pw);
-    const userRef = window._fbRef(window._fbDb, 'users/' + username);
+    if(!window._fb) throw new Error('Firebase nicht bereit. Bitte Seite neu laden.');
+    const { db, ref, get, set } = window._fb;
+    const userRef = ref(db, 'users/' + username);
+    const snap = await get(userRef);
 
-    if(loginTab === 'login') {
-      // ── LOGIN ──────────────────────────────────────────────
-      const snap = await window._fbGet(userRef);
-      if(!snap.exists()) { errEl.textContent = 'Kein Konto gefunden.'; return; }
-      const data = snap.val();
-      if(data.profile?.pwHash !== pwHash) { errEl.textContent = 'Falsches Passwort.'; return; }
-
-      // Success: set session and load game
-      currentUser = { username, uid: username };
-      lootId = getLootId(username);
-      window._userName = data.profile?.displayName || username;
-      await loadFromCloud(username);
-      hideLoginScreen();
-      initGame();
-
-    } else {
-      // ── REGISTER ───────────────────────────────────────────
-      const displayName = document.getElementById('login-username').value.trim() || username;
-      const snap = await window._fbGet(userRef);
-      if(snap.exists()) { errEl.textContent = 'Benutzername bereits vergeben.'; return; }
-
-      // Write profile (no email required anymore)
-      await window._fbSet(window._fbRef(window._fbDb, 'users/' + username + '/profile'), {
-        pwHash, displayName, createdAt: Date.now()
+    if(!snap.exists()) {
+      // New user – create entry
+      await set(ref(db, 'users/' + username + '/profile'), {
+        createdAt: Date.now(), username
       });
-
-      // Success: set session and start fresh game
-      currentUser = { username, uid: username };
-      lootId = getLootId(username);
-      window._userName = displayName;
-      hideLoginScreen();
-      initGame();
+      if(statEl) statEl.textContent = '✨ Neuer Held erstellt!';
+    } else {
+      if(statEl) statEl.textContent = '✅ Willkommen zurück!';
     }
+
+    currentUser = username;
+    lootId      = getLootId(username);
+    isGuest     = false;
+    try { localStorage.setItem('lootquest_session', username); } catch(e){}
+
+    await loadFromCloud(username);
+    hideLoginScreen();
+    initGame();
+
   } catch(e) {
-    errEl.textContent = 'Fehler: ' + (e.message || e);
+    if(errEl) errEl.textContent = 'Fehler: ' + (e.message || e);
+    if(statEl) statEl.textContent = '';
+  } finally {
+    if(btn) { btn.disabled=false; btn.textContent='⚔️ Starten'; }
   }
 }
 
 async function doGuest() {
-  isGuest = true;
-  lootId = 'GAST-' + Math.random().toString(36).substr(2,6).toUpperCase();
+  isGuest     = true;
   currentUser = null;
-  hideLoginScreen();
+  lootId      = 'GAST-' + Math.random().toString(36).substr(2,6).toUpperCase();
   loadLocal();
+  hideLoginScreen();
   initGame();
 }
 
 function doLogout() {
+  clearTimeout(_saveTimer);
+  if(currentUser && window._fb) saveCloud(); // Flush before logout
   currentUser = null;
-  lootId = null;
-  isGuest = false;
-  // Clear local session so auto-login doesn't re-enter
+  lootId      = null;
+  isGuest     = false;
   try { localStorage.removeItem('lootquest_session'); } catch(e){}
   showLoginScreen();
   closeSettings();
@@ -1333,37 +1409,66 @@ function hideLoginScreen() {
 }
 
 // ============================================================
-//  SAVE / LOAD (Firebase + LocalStorage fallback)
+//  SAVE / LOAD  (Firebase Realtime DB + localStorage fallback)
 // ============================================================
+
+// Debounce cloud saves to avoid hammering the DB
+let _saveTimer = null;
 function save() {
+  // Always save locally first (instant)
   try { localStorage.setItem('lootquest_v6', JSON.stringify(state)); } catch(e){}
-  if(currentUser && !isGuest && state.settings?.cloudSync!==false && window._fbSet && window._fbRef && window._fbDb) {
-    const saveData = JSON.parse(JSON.stringify(state));
-    // DB key is the username (uid alias)
-    window._fbSet(window._fbRef(window._fbDb, 'users/' + currentUser.username + '/gameState'), saveData).catch(()=>{});
+  try { localStorage.setItem('lootquest_pass', JSON.stringify(passState)); } catch(e){}
+
+  // Cloud save (debounced, 3 s)
+  if(currentUser && window._fb) {
+    clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(() => saveCloud(), 3000);
   }
+}
+
+async function saveCloud() {
+  if(!currentUser || !window._fb) return;
+  try {
+    const { db, ref, update } = window._fb;
+    await update(ref(db, 'users/' + currentUser), {
+      gameState: JSON.parse(JSON.stringify(state)),
+      passState:  JSON.parse(JSON.stringify(passState)),
+      lastSeen:   Date.now(),
+    });
+  } catch(e) { console.warn('Cloud-Save fehlgeschlagen:', e); }
 }
 
 function loadLocal() {
   try {
     const d = localStorage.getItem('lootquest_v6') || localStorage.getItem('lootquest_v5');
-    if(d) {
-      const loaded = JSON.parse(d);
-      state = Object.assign(state, loaded);
-    }
+    if(d) state = Object.assign(state, JSON.parse(d));
+  } catch(e){}
+  try {
+    const p = localStorage.getItem('lootquest_pass');
+    if(p) passState = Object.assign(passState, JSON.parse(p));
   } catch(e){}
   fixStateDefaults();
 }
 
 async function loadFromCloud(username) {
+  if(!window._fb) { loadLocal(); return; }
   try {
-    const snap = await window._fbGet(window._fbRef(window._fbDb, 'users/' + username + '/gameState'));
+    const { db, ref, get } = window._fb;
+    const snap = await get(ref(db, 'users/' + username));
     if(snap.exists()) {
-      state = Object.assign(state, snap.val());
+      const data = snap.val();
+      if(data.gameState) state     = Object.assign(state,     data.gameState);
+      if(data.passState) passState = Object.assign(passState, data.passState);
+      // Mirror to localStorage
+      try { localStorage.setItem('lootquest_v6',   JSON.stringify(state));     } catch(e){}
+      try { localStorage.setItem('lootquest_pass',  JSON.stringify(passState)); } catch(e){}
     } else {
-      loadLocal();
+      loadLocal(); // New user – start fresh
     }
-  } catch(e) { loadLocal(); }
+  } catch(e) {
+    console.warn('Cloud-Load fehlgeschlagen, lokaler Fallback:', e);
+    loadLocal();
+  }
   fixStateDefaults();
 }
 
@@ -1371,7 +1476,7 @@ function fixStateDefaults() {
   if(!state.dust) state.dust=0;
   if(!state.dailyQuests) state.dailyQuests=[];
   if(!state.unlockedDungeons) state.unlockedDungeons=['forest'];
-  if(!state.settings) state.settings={toasts:true,cloudSync:true,compact:false};
+  if(!state.settings) state.settings={toasts:true,compact:false};
   if(!state.gameMode) state.gameMode='normal';
   if(!state.stats.autoRuns) state.stats.autoRuns=0;
   if(!state.stats.crafted) state.stats.crafted=0;
@@ -1388,14 +1493,14 @@ function openSettings() {
   const nameEl = document.getElementById('settings-username');
   const lidEl = document.getElementById('settings-loot-id');
   const modeEl = document.getElementById('settings-mode-badge');
-  if(nameEl) nameEl.textContent = currentUser ? (window._userName || currentUser.username) : (isGuest ? 'Gast' : '—');
+  if(nameEl) nameEl.textContent = currentUser ? currentUser : (isGuest ? 'Gast' : '—');
   if(lidEl) lidEl.textContent = 'LootID: ' + (lootId||'—');
   const mode = GAME_MODES[state.gameMode]||GAME_MODES.normal;
   if(modeEl) modeEl.innerHTML = `<span class="user-mode-badge mode-${state.gameMode}">${mode.emoji} ${mode.label}</span>`;
   // Sync toggle states
   const t = state.settings||{};
-  ['toasts','cloudSync','compact'].forEach(k=>{
-    const el = document.getElementById({toasts:'toast-toggle',cloudSync:'sync-toggle',compact:'compact-toggle'}[k]);
+  ['toasts','compact'].forEach(k=>{
+    const el = document.getElementById({toasts:'toast-toggle',compact:'compact-toggle'}[k]);
     if(el) el.classList.toggle('on', t[k]!==false);
   });
   document.getElementById('settings-mode-select').value = state.gameMode||'normal';
@@ -1412,8 +1517,7 @@ function closeSettings() {
 function toggleSetting(key) {
   if(!state.settings) state.settings={};
   state.settings[key] = !state.settings[key];
-  const ids = {toasts:'toast-toggle',cloudSync:'sync-toggle',compact:'compact-toggle'};
-  const subs = {toasts:'toast-setting-sub',cloudSync:'sync-setting-sub'};
+  const ids = {toasts:'toast-toggle',compact:'compact-toggle'};
   document.getElementById(ids[key])?.classList.toggle('on', state.settings[key]);
   if(key==='compact') document.body.classList.toggle('compact', state.settings[key]);
   save();
@@ -1496,16 +1600,13 @@ function updateLootIdDisplay() {
 }
 
 // ============================================================
-//  FIREBASE READY — show login screen (no auto-login)
+//  FIREBASE READY — stub (handled by _onFbReady above)
 // ============================================================
-window._onFirebaseReady = function() {
-  if(initDone) return;
-  // Show login screen – user must authenticate via DB
-  document.getElementById('login-screen').classList.remove('hidden');
-};
+// (removed)
 
 function initGame() {
   fixStateDefaults();
+  loadPassState();
   applyGameMode();
   updateLootIdDisplay();
   initQuests(); initDailyQuests(); initDeals(); initBosses();
@@ -1576,6 +1677,7 @@ function exploreDungeon(idx) {
   const dustGain=Math.floor((idx+1)*Math.random()*3+1);
   state.dust+=Math.floor(dustGain*(1+getRelicBonus('dustMult')));
   addXP(Math.floor(d.xp*(1+getRelicBonus('xpMult'))));
+  addPassXP(Math.floor(d.xp * 0.1)); // 10% of dungeon XP goes to pass
   const n=1+(Math.random()<0.4?1:0)+(Math.random()<0.15?1:0);
   const drops=[];
   for(let i=0;i<n;i++){const id=rollDrop(d.drops,d.rates);addItem(id);drops.push(ITEMS.find(it=>it.id===id));}
@@ -1698,6 +1800,7 @@ function claimQuest(id) {
   if(q.reward.gems){state.gems+=q.reward.gems;toast(`💎 +${q.reward.gems} Gems`,'gems');}
   if(q.reward.dust){state.dust+=q.reward.dust;toast(`✨ +${q.reward.dust} Dust`,'good');}
   if(q.reward.xp) addXP(q.reward.xp);
+  addPassXP(Math.floor((q.reward.xp||0) * 0.5 + (q.reward.gold||0) * 0.01 + 50));
   save(); renderAll();
 }
 
@@ -2742,6 +2845,373 @@ function renderAll() {
   renderQuests(); renderPrestige(); renderLegend(); renderDailySection(); renderIAP();
   renderCraft(); renderDealing(); refreshDealSelects();
   renderRaids(); renderRelics(); renderAchievements(); renderAutoSection(); renderLog();
+  renderPass();
+}
+
+// ============================================================
+//  SEASON PASS SYSTEM
+// ============================================================
+
+// XP thresholds per level tier (cumulative XP needed to reach next level)
+function passXpForLevel(lv) {
+  if(lv <= 1)  return 0;       // Level 1 is free, no XP needed
+  if(lv <= 10) return 300;     // Levels 2-10: 300 XP each
+  if(lv <= 20) return 700;     // Levels 11-20: 700 XP each
+  return 1000;                  // Levels 21-50: 1000 XP each
+}
+
+const PASS_MAX_LEVEL = 50;
+
+// Pass reward tiers — every level has one FREE entry and one PRO entry
+const PASS_TIERS = [
+  // Lv 1
+  { level:1,  free:true,  emoji:'🎁', name:'Starterpaket',       reward:{gold:50}},
+  { level:1,  free:false, emoji:'💎', name:'Starter-Gems',        reward:{gems:5, gold:100}},
+  // Lv 2
+  { level:2,  free:true,  emoji:'🌿', name:'Heilkräuter x5',     reward:{items:[{id:'herb',qty:5}]}},
+  { level:2,  free:false, emoji:'🪙', name:'Goldvorrat',          reward:{gold:500}},
+  // Lv 3
+  { level:3,  free:true,  emoji:'💧', name:'Heiltrank x2',       reward:{items:[{id:'potion',qty:2}]}},
+  { level:3,  free:false, emoji:'🧪', name:'Alchemie-Set',        reward:{items:[{id:'potion',qty:5}]}},
+  // Lv 4
+  { level:4,  free:true,  emoji:'🪙', name:'Gold I',             reward:{gold:300}},
+  { level:4,  free:false, emoji:'✨', name:'Dust-Vorrat',         reward:{dust:50}},
+  // Lv 5
+  { level:5,  free:true,  emoji:'💎', name:'Gems x3',            reward:{gems:3}},
+  { level:5,  free:false, emoji:'💎', name:'Gems x10',            reward:{gems:10}},
+  // Lv 6
+  { level:6,  free:true,  emoji:'🪙', name:'Gold II',            reward:{gold:600}},
+  { level:6,  free:false, emoji:'⚔️', name:'Elfenschwert',        reward:{items:[{id:'sword_fine',qty:1}]}},
+  // Lv 7
+  { level:7,  free:true,  emoji:'✨', name:'Dust x30',           reward:{dust:30}},
+  { level:7,  free:false, emoji:'🪙', name:'Goldschatz',          reward:{gold:1200}},
+  // Lv 8
+  { level:8,  free:true,  emoji:'🌿', name:'Kräuter x10',        reward:{items:[{id:'herb',qty:10}]}},
+  { level:8,  free:false, emoji:'🪄', name:'Zauberstab',          reward:{items:[{id:'magic_staff',qty:1}]}},
+  // Lv 9
+  { level:9,  free:true,  emoji:'🪙', name:'Gold III',           reward:{gold:900}},
+  { level:9,  free:false, emoji:'✨', name:'Dust x100',           reward:{dust:100}},
+  // Lv 10
+  { level:10, free:true,  emoji:'🔱', name:'Epic-Belohnung',     reward:{gems:10}},
+  { level:10, free:false, emoji:'🔱', name:'Epic-Pro-Paket',      reward:{gems:20, gold:2000}},
+  // Lv 11
+  { level:11, free:true,  emoji:'🪙', name:'Gold IV',            reward:{gold:1500}},
+  { level:11, free:false, emoji:'✨', name:'Dust-Segen',          reward:{dust:150}},
+  // Lv 12
+  { level:12, free:true,  emoji:'💎', name:'Gems x5',            reward:{gems:5}},
+  { level:12, free:false, emoji:'🪓', name:'Donneraxt',           reward:{items:[{id:'axe_thunder',qty:1}]}},
+  // Lv 13
+  { level:13, free:true,  emoji:'✨', name:'Dust x80',           reward:{dust:80}},
+  { level:13, free:false, emoji:'🪙', name:'Goldflut',            reward:{gold:3000}},
+  // Lv 14
+  { level:14, free:true,  emoji:'🪙', name:'Gold V',             reward:{gold:2000}},
+  { level:14, free:false, emoji:'💎', name:'Gems x15',            reward:{gems:15}},
+  // Lv 15
+  { level:15, free:true,  emoji:'🎁', name:'Milestone-Paket',    reward:{gold:2500, gems:5}},
+  { level:15, free:false, emoji:'👑', name:'Krone des Chaos',     reward:{items:[{id:'crown',qty:1}]}},
+  // Lv 16
+  { level:16, free:true,  emoji:'🪙', name:'Gold VI',            reward:{gold:3000}},
+  { level:16, free:false, emoji:'✨', name:'Dust-Flut',           reward:{dust:300}},
+  // Lv 17
+  { level:17, free:true,  emoji:'💎', name:'Gems x8',            reward:{gems:8}},
+  { level:17, free:false, emoji:'🪙', name:'Reichtum',            reward:{gold:5000}},
+  // Lv 18
+  { level:18, free:true,  emoji:'✨', name:'Dust x150',          reward:{dust:150}},
+  { level:18, free:false, emoji:'⚡', name:'Sturmklinge',         reward:{items:[{id:'storm_blade',qty:1}]}},
+  // Lv 19
+  { level:19, free:true,  emoji:'🪙', name:'Gold VII',           reward:{gold:4000}},
+  { level:19, free:false, emoji:'💎', name:'Gems x20',            reward:{gems:20}},
+  // Lv 20
+  { level:20, free:true,  emoji:'🔱', name:'Mythic-Meilenstein', reward:{gems:15, gold:5000}},
+  { level:20, free:false, emoji:'🔱', name:'Mythic-Pro-Paket',    reward:{gems:50, gold:8000}},
+  // Lv 21
+  { level:21, free:true,  emoji:'🪙', name:'Gold VIII',          reward:{gold:6000}},
+  { level:21, free:false, emoji:'✨', name:'Dust-Strom',          reward:{dust:500}},
+  // Lv 22
+  { level:22, free:true,  emoji:'💎', name:'Gems x10',           reward:{gems:10}},
+  { level:22, free:false, emoji:'🪙', name:'Goldberg',            reward:{gold:12000}},
+  // Lv 23
+  { level:23, free:true,  emoji:'✨', name:'Dust x200',          reward:{dust:200}},
+  { level:23, free:false, emoji:'💎', name:'Gems x30',            reward:{gems:30}},
+  // Lv 24
+  { level:24, free:true,  emoji:'🪙', name:'Gold IX',            reward:{gold:8000}},
+  { level:24, free:false, emoji:'🐉', name:'Drachenzahn',         reward:{items:[{id:'dragon_fang',qty:1}]}},
+  // Lv 25
+  { level:25, free:true,  emoji:'🎁', name:'Midseason-Paket',    reward:{gold:10000, gems:10}},
+  { level:25, free:false, emoji:'🎁', name:'Midseason-Pro-Paket', reward:{gold:20000, gems:25, dust:500}},
+  // Lv 26
+  { level:26, free:true,  emoji:'🪙', name:'Gold X',             reward:{gold:10000}},
+  { level:26, free:false, emoji:'✨', name:'Dust-Ozean',          reward:{dust:800}},
+  // Lv 27
+  { level:27, free:true,  emoji:'💎', name:'Gems x12',           reward:{gems:12}},
+  { level:27, free:false, emoji:'🌑', name:'Schattenklinge',      reward:{items:[{id:'shadow_blade',qty:1}]}},
+  // Lv 28
+  { level:28, free:true,  emoji:'✨', name:'Dust x300',          reward:{dust:300}},
+  { level:28, free:false, emoji:'🪙', name:'Goldschatz III',      reward:{gold:20000}},
+  // Lv 29
+  { level:29, free:true,  emoji:'🪙', name:'Gold XI',            reward:{gold:12000}},
+  { level:29, free:false, emoji:'💎', name:'Gems x40',            reward:{gems:40}},
+  // Lv 30
+  { level:30, free:true,  emoji:'⭐', name:'Legendary-Meil.',    reward:{gems:20, gold:15000}},
+  { level:30, free:false, emoji:'⭐', name:'Legendary-Pro-Paket', reward:{gems:100, gold:30000}},
+  // Lv 31
+  { level:31, free:true,  emoji:'🪙', name:'Gold XII',           reward:{gold:15000}},
+  { level:31, free:false, emoji:'⚡', name:'Excalibur',           reward:{items:[{id:'excalibur',qty:1}]}},
+  // Lv 32
+  { level:32, free:true,  emoji:'💎', name:'Gems x15',           reward:{gems:15}},
+  { level:32, free:false, emoji:'🪙', name:'Großer Schatz',       reward:{gold:40000}},
+  // Lv 33
+  { level:33, free:true,  emoji:'✨', name:'Dust x500',          reward:{dust:500}},
+  { level:33, free:false, emoji:'💎', name:'Gems x60',            reward:{gems:60}},
+  // Lv 34
+  { level:34, free:true,  emoji:'🪙', name:'Gold XIII',          reward:{gold:20000}},
+  { level:34, free:false, emoji:'✨', name:'Dust-Vulkan',         reward:{dust:1200}},
+  // Lv 35
+  { level:35, free:true,  emoji:'🎁', name:'Elite-Paket',        reward:{gold:25000, gems:15}},
+  { level:35, free:false, emoji:'🌈', name:'Prismaschwert',       reward:{items:[{id:'prism_sword',qty:1}]}},
+  // Lv 36
+  { level:36, free:true,  emoji:'🪙', name:'Gold XIV',           reward:{gold:25000}},
+  { level:36, free:false, emoji:'💎', name:'Gems x80',            reward:{gems:80}},
+  // Lv 37
+  { level:37, free:true,  emoji:'✨', name:'Dust x800',          reward:{dust:800}},
+  { level:37, free:false, emoji:'🪙', name:'Mega-Schatz',         reward:{gold:60000}},
+  // Lv 38
+  { level:38, free:true,  emoji:'💎', name:'Gems x20',           reward:{gems:20}},
+  { level:38, free:false, emoji:'✨', name:'Dust-Titan',          reward:{dust:2000}},
+  // Lv 39
+  { level:39, free:true,  emoji:'🪙', name:'Gold XV',            reward:{gold:30000}},
+  { level:39, free:false, emoji:'🫧', name:'Chaos-Orb',           reward:{items:[{id:'chaos_orb',qty:1}]}},
+  // Lv 40
+  { level:40, free:true,  emoji:'🌟', name:'Chromatic-Meil.',    reward:{gems:30, gold:30000}},
+  { level:40, free:false, emoji:'🌟', name:'Chromatic-Pro-Paket', reward:{gems:200, gold:100000}},
+  // Lv 41
+  { level:41, free:true,  emoji:'🪙', name:'Gold XVI',           reward:{gold:40000}},
+  { level:41, free:false, emoji:'🖤', name:'Herzleere',           reward:{items:[{id:'void_heart',qty:1}]}},
+  // Lv 42
+  { level:42, free:true,  emoji:'✨', name:'Dust x1500',         reward:{dust:1500}},
+  { level:42, free:false, emoji:'💎', name:'Gems x120',           reward:{gems:120}},
+  // Lv 43
+  { level:43, free:true,  emoji:'💎', name:'Gems x25',           reward:{gems:25}},
+  { level:43, free:false, emoji:'🪙', name:'Ultra-Schatz',        reward:{gold:150000}},
+  // Lv 44
+  { level:44, free:true,  emoji:'🪙', name:'Gold XVII',          reward:{gold:50000}},
+  { level:44, free:false, emoji:'✨', name:'Dust-Legende',        reward:{dust:5000}},
+  // Lv 45
+  { level:45, free:true,  emoji:'🎁', name:'Pre-Finale-Paket',   reward:{gold:60000, gems:30}},
+  { level:45, free:false, emoji:'🌑', name:'Null-Klinge',         reward:{items:[{id:'null_blade',qty:1}]}},
+  // Lv 46
+  { level:46, free:true,  emoji:'🪙', name:'Gold XVIII',         reward:{gold:80000}},
+  { level:46, free:false, emoji:'💎', name:'Gems x200',           reward:{gems:200}},
+  // Lv 47
+  { level:47, free:true,  emoji:'✨', name:'Dust x5000',         reward:{dust:5000}},
+  { level:47, free:false, emoji:'🪙', name:'Legende Gold',        reward:{gold:250000}},
+  // Lv 48
+  { level:48, free:true,  emoji:'💎', name:'Gems x50',           reward:{gems:50}},
+  { level:48, free:false, emoji:'✨', name:'Dust-Kosmos',         reward:{dust:10000}},
+  // Lv 49
+  { level:49, free:true,  emoji:'🪙', name:'Gold XIX',           reward:{gold:120000}},
+  { level:49, free:false, emoji:'💥', name:'Kos. Vernichter',     reward:{items:[{id:'cosmos_destroyer',qty:1}]}},
+  // Lv 50
+  { level:50, free:true,  emoji:'🏆', name:'Saisonmeister FREE', reward:{gems:100, gold:200000}},
+  { level:50, free:false, emoji:'🏆', name:'Saisonmeister PRO',  reward:{gems:1000, gold:500000, dust:20000}},
+];
+
+// Pass state stored separately in localStorage
+let passState = {
+  level: 1,
+  xp: 0,
+  claimed: [],    // array of level numbers claimed
+  season: null,   // YYYY-MM string of current season
+};
+
+function getPassSeason() {
+  const d = new Date();
+  // Season runs from 11th to 10th of next month
+  const day = d.getDate();
+  let month = d.getMonth(); // 0-based
+  let year  = d.getFullYear();
+  // If before the 11th, we're still in last month's season
+  if(day < 11) {
+    month -= 1;
+    if(month < 0) { month = 11; year -= 1; }
+  }
+  return `${year}-${String(month+1).padStart(2,'0')}`;
+}
+
+function getNextPassReset() {
+  const d = new Date();
+  const day = d.getDate();
+  let month = d.getMonth();
+  let year  = d.getFullYear();
+  // Next reset is on the 11th of next month
+  month += 1;
+  if(month > 11) { month = 0; year += 1; }
+  const reset = new Date(year, month, 11);
+  const diff = reset - d;
+  const days = Math.floor(diff / 86400000);
+  const hrs  = Math.floor((diff % 86400000) / 3600000);
+  if(days > 0) return `in ${days} Tag${days!==1?'en':''}`;
+  return `in ${hrs} Stunde${hrs!==1?'n':''}`;
+}
+
+function loadPassState() {
+  try {
+    const d = localStorage.getItem('lootquest_pass');
+    if(d) passState = Object.assign(passState, JSON.parse(d));
+  } catch(e){}
+  // Check if season changed → reset
+  const currentSeason = getPassSeason();
+  if(passState.season !== currentSeason) {
+    passState = { level:1, xp:0, claimed:[], season:currentSeason };
+    // Auto-claim level 1 (free)
+    passState.claimed.push(1);
+    try { localStorage.setItem('lootquest_pass', JSON.stringify(passState)); } catch(e){}
+  }
+  if(!passState.claimed.includes(1)) passState.claimed.push(1); // always give level 1
+}
+
+function addPassXP(amount) {
+  if(passState.level >= PASS_MAX_LEVEL) return;
+  passState.xp += amount;
+  let changed = false;
+  while(passState.level < PASS_MAX_LEVEL) {
+    const needed = passXpForLevel(passState.level + 1);
+    if(passState.xp >= needed) {
+      passState.xp -= needed;
+      passState.level++;
+      changed = true;
+      toast(`🎫 Pass Stufe ${passState.level} erreicht!`, 'gems');
+      // Auto-claim free tiers
+      const tier = PASS_TIERS.find(t=>t.level===passState.level);
+      if(tier && tier.free && !passState.claimed.includes(tier.level)) {
+        claimPassTier(tier.level, true);
+      }
+    } else break;
+  }
+  if(changed) { renderPass(); updatePassBadge(); }
+}
+
+function claimPassTier(level, isFree, silent=false) {
+  const key = level + (isFree ? '_free' : '_pro');
+  if(passState.claimed.includes(key)) return;
+  const tier = PASS_TIERS.find(t=>t.level===level && t.free===isFree);
+  if(!tier) return;
+  if(passState.level < level) { if(!silent) toast('Stufe noch nicht erreicht!','bad'); return; }
+  passState.claimed.push(key);
+  const r = tier.reward;
+  if(r.gold)  { state.gold  += r.gold;  if(!silent) toast(`🪙 +${fmt(r.gold)} Gold`, 'gold'); }
+  if(r.gems)  { state.gems  += r.gems;  if(!silent) toast(`💎 +${r.gems} Gems`, 'gems'); }
+  if(r.dust)  { state.dust  += r.dust;  if(!silent) toast(`✨ +${r.dust} Dust`, 'good'); }
+  if(r.items) { r.items.forEach(it=>addItem(it.id, it.qty)); if(!silent) toast(`${tier.emoji} ${tier.name} erhalten!`, 'gold'); }
+  save(); renderAll();
+}
+
+function updatePassBadge() {
+  const el = document.getElementById('pass-progress-badge');
+  if(el) el.textContent = `Stufe ${passState.level}/${PASS_MAX_LEVEL}`;
+}
+
+function renderPass() {
+  updatePassBadge();
+  // XP bar
+  const lv = passState.level;
+  const maxed = lv >= PASS_MAX_LEVEL;
+  const needed = maxed ? 1 : passXpForLevel(lv + 1);
+  const pct = maxed ? 100 : Math.min(100, (passState.xp / needed) * 100);
+  const barEl = document.getElementById('pass-xp-bar');
+  const lblEl = document.getElementById('pass-xp-label');
+  const lvEl  = document.getElementById('pass-level-num');
+  if(barEl) barEl.style.width = pct + '%';
+  if(lblEl) lblEl.textContent = maxed ? 'MAX' : `${passState.xp} / ${needed} XP`;
+  if(lvEl)  lvEl.textContent  = lv;
+  // Meta info
+  const metaEl  = document.getElementById('pass-meta-text');
+  const resetEl = document.getElementById('pass-reset-text');
+  if(metaEl)  metaEl.textContent  = `Saison: ${passState.season}  •  Stufe: ${lv}/${PASS_MAX_LEVEL}`;
+  if(resetEl) resetEl.textContent = `🔄 Nächster Reset ${getNextPassReset()} (am 11.)`;
+
+  // Build the pass tiers data: for each level we need a FREE and a PRO card.
+  // Levels that only have one tier (free:true) → free card + empty pro slot.
+  // Levels that only have one tier (free:false) → empty free slot + pro card.
+  // We group by level number.
+  const byLevel = {};
+  PASS_TIERS.forEach(t => {
+    if(!byLevel[t.level]) byLevel[t.level] = { free:null, pro:null };
+    if(t.free) byLevel[t.level].free = t;
+    else       byLevel[t.level].pro  = t;
+  });
+
+  function rewardText(tier) {
+    if(!tier) return '';
+    const r = tier.reward, parts = [];
+    if(r.gold)  parts.push(`🪙${fmt(r.gold)}`);
+    if(r.gems)  parts.push(`💎${r.gems}`);
+    if(r.dust)  parts.push(`✨${r.dust}`);
+    if(r.items) r.items.forEach(it=>{ const item=ITEMS.find(i=>i.id===it.id); if(item) parts.push(`${item.emoji}×${it.qty}`); });
+    return parts.join(' ');
+  }
+
+  function cardHTML(tier, rowType) {
+    if(!tier) {
+      // Empty placeholder so grid stays aligned
+      return `<div class="pass-card card-${rowType}" style="visibility:hidden;"></div>`;
+    }
+    const unlocked = passState.level >= tier.level;
+    const claimed  = passState.claimed.includes(tier.level);
+    const canClaim = unlocked && !claimed;
+    let cls = `pass-card card-${rowType}`;
+    if(unlocked) cls += ' card-unlocked';
+    if(claimed)  cls += ' card-claimed';
+    let action = '';
+    if(claimed)        action = `<div class="pass-claimed-mark">✅</div>`;
+    else if(canClaim)  action = `<button class="pass-claim-btn ${rowType==='free'?'btn-free':''}" onclick="claimPassTier(${tier.level})">Abholen!</button>`;
+    else               action = `<div class="pass-locked-mark">🔒</div>`;
+    return `<div class="${cls}">
+      <div class="pc-label">${rowType==='free'?'FREE':'PRO'}</div>
+      <span class="pc-emoji">${tier.emoji}</span>
+      <div class="pc-name">${tier.name}</div>
+      <div class="pc-reward">${rewardText(tier)}</div>
+      ${action}
+    </div>`;
+  }
+
+  const levels = [...new Set(PASS_TIERS.map(t=>t.level))].sort((a,b)=>a-b);
+  const grid = document.getElementById('pass-tier-grid');
+  if(!grid) return;
+
+  grid.innerHTML = levels.map((lvNum, i) => {
+    const { free, pro } = byLevel[lvNum];
+    const unlocked = passState.level >= lvNum;
+    const isCurrent = passState.level === lvNum;
+    const isDone    = passState.level > lvNum;
+    let colCls = 'pass-col';
+    if(unlocked)  colCls += ' col-unlocked';
+    if(isCurrent) colCls += ' col-current';
+
+    const connectorCls = 'pass-connector' + (isDone ? ' done' : '');
+
+    return `<div class="${colCls}">
+      ${cardHTML(free, 'free')}
+      <div class="pass-col-num" style="position:relative;">
+        ${i < levels.length-1 ? `<div class="${connectorCls}"></div>` : ''}
+        ${lvNum}
+      </div>
+      ${cardHTML(pro, 'pro')}
+    </div>`;
+  }).join('');
+
+  // Auto-scroll to current level
+  requestAnimationFrame(() => {
+    const outer = document.getElementById('pass-scroll-outer');
+    const cols  = grid.querySelectorAll('.pass-col');
+    const curIdx = levels.indexOf(lv);
+    if(outer && curIdx >= 0 && cols[curIdx]) {
+      const col = cols[curIdx];
+      const colLeft = col.offsetLeft;
+      const scrollTarget = colLeft - outer.clientWidth / 2 + 65;
+      outer.scrollTo({ left: Math.max(0, scrollTarget), behavior: 'smooth' });
+    }
+  });
 }
 
 // POPUP
@@ -2789,16 +3259,51 @@ setInterval(updateSpeedrunTimer, 1000);
 setInterval(()=>{ checkAchievements(); }, 15000);
 setInterval(save, 15000);
 
-// INIT — show login screen once Firebase is ready; fall back after 5s if offline
+// ============================================================
+//  INIT — Firebase ready → Auto-Login oder Login-Screen
+// ============================================================
 let initDone = false;
-// Offline fallback: if Firebase never responds, let player use guest mode
-setTimeout(()=>{
-  if(!initDone && !isGuest && !currentUser) {
+
+async function autoLoginOrShowScreen() {
+  if(initDone) return;
+  initDone = true;
+
+  // Try auto-login from saved session
+  const savedUser = (() => { try { return localStorage.getItem('lootquest_session'); } catch(e){ return null; } })();
+
+  if(savedUser && window._fb) {
+    try {
+      const { db, ref, get } = window._fb;
+      const snap = await get(ref(db, 'users/' + savedUser));
+      if(snap.exists()) {
+        currentUser = savedUser;
+        lootId      = getLootId(savedUser);
+        isGuest     = false;
+        await loadFromCloud(savedUser);
+        hideLoginScreen();
+        initGame();
+        return;
+      }
+    } catch(e) { /* fall through to login screen */ }
+  }
+
+  // Show login screen
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+// Firebase module signals readiness via window._onFbReady
+window._onFbReady = autoLoginOrShowScreen;
+
+// Fallback: if Firebase never loads (offline), show login after 6s
+setTimeout(() => {
+  if(!initDone) {
+    initDone = true;
     document.getElementById('login-screen').classList.remove('hidden');
   }
-}, 5000);
-// If Firebase module already signalled ready before this script reached here
-if(window._firebaseReady) window._onFirebaseReady();
+}, 6000);
+
+// If Firebase already loaded before this script ran
+if(window._fbReady) autoLoginOrShowScreen();
 </script>
 </body>
 </html>
