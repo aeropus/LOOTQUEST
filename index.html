@@ -3637,7 +3637,7 @@ function openProDrop() {
   if (!overlay) { toast('Pro-Drop nicht verfügbar!', 'bad'); return; }
 
   // Startet bei Uncommon (Index 1)
-  proDropState = { rarIdx: 1, clicks: 5, done: 0, collected: false, rewardText: null };
+  proDropState = { rarIdx: 0, clicks: 5, done: 0, collected: false, rewardText: null };
 
   pdUpdateDisplay();
   document.getElementById('pd-progress-text').textContent = `Noch 5 Klicks`;
