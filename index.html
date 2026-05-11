@@ -1171,7 +1171,7 @@
 <div class="pro-drop-overlay" id="pro-drop-overlay" onclick="if(event.target===this)closeProDrop()">
   <div class="pro-drop-box">
     <div class="pro-drop-title">🎰 Pro-Drop</div>
-    <div class="pro-drop-subtitle">1 💎 Gem — Klicke auf den Stein!</div>
+    <div class="pro-drop-subtitle">1 💎 Gem — 5× Klicken, Seltenheit steigt!</div>
     <div class="pro-drop-rarity-indicator" id="pd-rarity-indicator"></div>
     <div class="pro-drop-gem" id="pd-gem" onclick="pdGemClick()">❓</div>
     <div class="pro-drop-click-track" id="pd-click-track"></div>
@@ -3570,16 +3570,51 @@ function renderHome() {
 // PRO-DROP
 let proDropState = null;
 
-function openProDrop() {
-  if (!state.gems || state.gems < 1) { toast('Keine Gems für Pro-Drop!', 'bad'); return; }
-  const overlay = document.getElementById('pro-drop-overlay');
-  if (!overlay) { toast('Pro-Drop nicht verfügbar!', 'bad'); return; }
-  const rates = { common:0.30, uncommon:0.25, rare:0.20, epic:0.13, mythic:0.07, legendary:0.03, chromatic:0.015, secret:0.005 };
-  const rar = rollRarity(rates);
-  const pool = ITEMS.filter(i => i.rarity === rar);
-  const item = pool[Math.floor(Math.random() * pool.length)];
-  const clicks = 3 + Math.floor(Math.random() * 4);
-  proDropState = { item, rar, clicks, done: 0, collected: false };
+// Pro-Drop Belohnungstabellen nach Seltenheit
+const PRO_DROP_REWARDS = {
+  rare:      { label:'Rare',      emoji:'🟢', options:[
+    { type:'dust',  emoji:'✨', name:'Dust',        fn:()=>{ const a=Math.floor(50+Math.random()*100); state.dust+=a; return `+${a} Dust`; } },
+    { type:'coins', emoji:'🪙', name:'Coins',       fn:()=>{ const a=Math.floor(500+Math.random()*1000); state.gold+=a; return `+${a} Coins`; } },
+    { type:'gems',  emoji:'💎', name:'Gems',        fn:()=>{ state.gems+=1; return '+1 Gem'; } },
+    { type:'xp',    emoji:'⭐', name:'XP',          fn:()=>{ const a=100+Math.floor(Math.random()*200); addXP(a); return `+${a} XP`; } },
+    { type:'item',  emoji:'📦', name:'Item',        fn:()=>{ const pool=ITEMS.filter(i=>['common','uncommon'].includes(i.rarity)); const it=pool[Math.floor(Math.random()*pool.length)]; if(it){addItem(it.id,1);return `${it.emoji} ${it.name}`;} return '+1 Item'; } },
+  ]},
+  epic:      { label:'Epic',      emoji:'🟣', options:[
+    { type:'gems',  emoji:'💎', name:'Gems',        fn:()=>{ const a=2+Math.floor(Math.random()*3); state.gems+=a; return `+${a} Gems`; } },
+    { type:'coins', emoji:'🪙', name:'Coins',       fn:()=>{ const a=Math.floor(2000+Math.random()*3000); state.gold+=a; return `+${a} Coins`; } },
+    { type:'dust',  emoji:'✨', name:'Dust',        fn:()=>{ const a=Math.floor(150+Math.random()*250); state.dust+=a; return `+${a} Dust`; } },
+    { type:'xp',    emoji:'⭐', name:'XP',          fn:()=>{ const a=300+Math.floor(Math.random()*400); addXP(a); return `+${a} XP`; } },
+    { type:'item',  emoji:'📦', name:'Item',        fn:()=>{ const pool=ITEMS.filter(i=>['common','uncommon','rare'].includes(i.rarity)); const it=pool[Math.floor(Math.random()*pool.length)]; if(it){addItem(it.id,1);return `${it.emoji} ${it.name}`;} return '+1 Item'; } },
+  ]},
+  mythic:    { label:'Mythic',    emoji:'🔴', options:[
+    { type:'gems',  emoji:'💎', name:'Gems',        fn:()=>{ const a=4+Math.floor(Math.random()*4); state.gems+=a; return `+${a} Gems`; } },
+    { type:'dust',  emoji:'✨', name:'Dust',        fn:()=>{ const a=Math.floor(400+Math.random()*600); state.dust+=a; return `+${a} Dust`; } },
+    { type:'item',  emoji:'📦', name:'Item',        fn:()=>{ const pool=ITEMS.filter(i=>['common','uncommon','rare','epic'].includes(i.rarity)); const it=pool[Math.floor(Math.random()*pool.length)]; if(it){addItem(it.id,1);return `${it.emoji} ${it.name}`;} return '+1 Item'; } },
+  ]},
+  legendary: { label:'Legendary', emoji:'🌟', options:[
+    { type:'prestige', emoji:'✨', name:'+1 Prestige',  fn:()=>{ state.prestige=(state.prestige||0)+1; return '+1 Prestige'; } },
+    { type:'gems',     emoji:'💎', name:'Gems',         fn:()=>{ const a=8+Math.floor(Math.random()*7); state.gems+=a; return `+${a} Gems`; } },
+    { type:'dust',     emoji:'✨', name:'Dust',         fn:()=>{ const a=Math.floor(800+Math.random()*1200); state.dust+=a; return `+${a} Dust`; } },
+    { type:'item',     emoji:'📦', name:'Item',         fn:()=>{ const pool=ITEMS.filter(i=>['common','uncommon','rare','epic','mythic','legendary'].includes(i.rarity)); const it=pool[Math.floor(Math.random()*pool.length)]; if(it){addItem(it.id,1);return `${it.emoji} ${it.name}`;} return '+1 Item'; } },
+  ]},
+  chromatic: { label:'Chromatic', emoji:'🌈', options:[
+    { type:'gems',     emoji:'💎', name:'Gems',         fn:()=>{ const a=12+Math.floor(Math.random()*8); state.gems+=a; return `+${a} Gems`; } },
+    { type:'prestige', emoji:'✨', name:'+2 Prestige',  fn:()=>{ state.prestige=(state.prestige||0)+2; return '+2 Prestige'; } },
+    { type:'dust',     emoji:'✨', name:'Dust',         fn:()=>{ const a=Math.floor(1500+Math.random()*2000); state.dust+=a; return `+${a} Dust`; } },
+    { type:'items2',   emoji:'📦', name:'2x Items',     fn:()=>{ const pool=ITEMS.filter(i=>['common','uncommon','rare','epic','mythic','legendary'].includes(i.rarity)); let res=''; for(let k=0;k<2;k++){const it=pool[Math.floor(Math.random()*pool.length)];if(it){addItem(it.id,1);res+=(res?', ':'')+`${it.emoji} ${it.name}`;}} return res||'2x Items'; } },
+  ]},
+  secret:    { label:'Secret',    emoji:'⬛', options:[
+    { type:'items3',   emoji:'📦', name:'3x Items',     fn:()=>{ const pool=ITEMS; let res=''; for(let k=0;k<3;k++){const it=pool[Math.floor(Math.random()*pool.length)];if(it){addItem(it.id,1);res+=(res?', ':'')+`${it.emoji} ${it.name}`;}} return res||'3x Items'; } },
+    { type:'gems',     emoji:'💎', name:'Gems',         fn:()=>{ const a=20+Math.floor(Math.random()*15); state.gems+=a; return `+${a} Gems`; } },
+    { type:'dust',     emoji:'✨', name:'Dust',         fn:()=>{ const a=Math.floor(3000+Math.random()*4000); state.dust+=a; return `+${a} Dust`; } },
+  ]},
+};
+
+const PD_RARITY_NAMES = ['common','uncommon','rare','epic','mythic','legendary','chromatic','secret'];
+
+function pdUpdateDisplay() {
+  const ps = proDropState;
+  const rar = PD_RARITY_NAMES[ps.rarIdx];
   const rarColors = { common:'#5588ff', uncommon:'#55ddff', rare:'#44dd88', epic:'#cc44ff', mythic:'#ff3333', legendary:'#ffdd00', chromatic:'#ff8800', secret:'#ffffff' };
   const col = rarColors[rar] || '#5588ff';
   const ri = document.getElementById('pd-rarity-indicator');
@@ -3588,11 +3623,27 @@ function openProDrop() {
   const gem = document.getElementById('pd-gem');
   gem.style.setProperty('--drop-color', col);
   gem.className = `pro-drop-gem pdr-${rar}`;
-  gem.textContent = item ? item.emoji : '\u2753';
-  document.getElementById('pd-progress-text').textContent = `Noch ${clicks} Klicks`;
+  gem.textContent = pdRarEmoji(rar);
+}
+
+function pdRarEmoji(rar) {
+  const map = { common:'⚪', uncommon:'🔵', rare:'🟢', epic:'🟣', mythic:'🔴', legendary:'🌟', chromatic:'🌈', secret:'⬛' };
+  return map[rar] || '❓';
+}
+
+function openProDrop() {
+  if (!state.gems || state.gems < 1) { toast('Keine Gems für Pro-Drop!', 'bad'); return; }
+  const overlay = document.getElementById('pro-drop-overlay');
+  if (!overlay) { toast('Pro-Drop nicht verfügbar!', 'bad'); return; }
+
+  // Startet bei Uncommon (Index 1)
+  proDropState = { rarIdx: 1, clicks: 5, done: 0, collected: false, rewardText: null };
+
+  pdUpdateDisplay();
+  document.getElementById('pd-progress-text').textContent = `Noch 5 Klicks`;
   document.getElementById('pd-collect-btn').classList.remove('visible');
   document.getElementById('pd-reward-display').classList.remove('visible');
-  document.getElementById('pd-click-track').innerHTML = Array.from({length: clicks}, () => `<div class="pdc-dot"></div>`).join('');
+  document.getElementById('pd-click-track').innerHTML = Array.from({length: 5}, () => `<div class="pdc-dot"></div>`).join('');
   overlay.classList.add('visible');
 }
 
@@ -3601,19 +3652,52 @@ function pdGemClick() {
   const ps = proDropState;
   if (ps.done >= ps.clicks) return;
   ps.done++;
+
+  // Pro Klick: 0, 1, 2 oder 3 Seltenheiten upgraden
+  const roll = Math.random();
+  let upgrade;
+  if (roll < 0.30) upgrade = 0;
+  else if (roll < 0.60) upgrade = 1;
+  else if (roll < 0.85) upgrade = 2;
+  else upgrade = 3;
+
+  ps.rarIdx = Math.min(ps.rarIdx + upgrade, PD_RARITY_NAMES.length - 1);
+
+  // Nach dem letzten (5.) Klick: Minimum Rare garantieren
+  if (ps.done >= ps.clicks) {
+    if (ps.rarIdx < 2) ps.rarIdx = 2; // Mindestens Rare (Index 2)
+  }
+
+  pdUpdateDisplay();
+
   const dots = document.querySelectorAll('#pd-click-track .pdc-dot');
   if (dots[ps.done - 1]) dots[ps.done - 1].classList.add('filled');
+
   const remaining = ps.clicks - ps.done;
   document.getElementById('pd-progress-text').textContent = remaining > 0 ? `Noch ${remaining} Klicks` : 'Jetzt einsammeln!';
+
   const gem = document.getElementById('pd-gem');
   gem.classList.add('shaking');
+  if (upgrade > 0) {
+    gem.style.transform = 'scale(1.15)';
+    setTimeout(() => { gem.style.transform = ''; }, 250);
+  }
   setTimeout(() => gem.classList.remove('shaking'), 300);
+
   if (ps.done >= ps.clicks) {
     dots.forEach(d => d.classList.add('collect'));
     document.getElementById('pd-collect-btn').classList.add('visible');
-    const rewardEl = document.getElementById('pd-reward-display');
-    rewardEl.classList.add('visible');
-    document.getElementById('pd-reward-value').textContent = ps.item ? `${ps.item.emoji} ${ps.item.name} [${ps.rar}]` : '???';
+
+    // Belohnungsvorschau berechnen
+    const rar = PD_RARITY_NAMES[ps.rarIdx];
+    const rewardTable = PRO_DROP_REWARDS[rar];
+    if (rewardTable) {
+      const picked = rewardTable.options[Math.floor(Math.random() * rewardTable.options.length)];
+      ps._pickedReward = picked;
+      const rewardEl = document.getElementById('pd-reward-display');
+      rewardEl.classList.add('visible');
+      document.getElementById('pd-reward-value').textContent = `${picked.emoji} ${picked.name} [${rar.toUpperCase()}]`;
+    }
   }
 }
 
@@ -3622,21 +3706,31 @@ function pdCollect() {
   proDropState.collected = true;
   if (state.gems < 1) { toast('Keine Gems!', 'bad'); closeProDrop(); return; }
   state.gems -= 1;
-  const { item, rar } = proDropState;
-  if (item) {
-    addItem(item.id, 1);
-    const isSecret = rar==='secret', isChrom = rar==='chromatic', isLeg = rar==='legendary';
-    if (isSecret) toast('\u2b1b SECRET DROP!!!', 'secret');
-    else if (isChrom) toast('\u{1F308} CHROMATIC DROP!!!', 'chrom');
-    else if (isLeg) toast('\u2b50 LEGENDARY DROP!', 'gold');
-    else toast(`${item.emoji} ${item.name} erhalten!`, 'good');
-    addLog(`\u{1F3B0} Pro-Drop: ${item.emoji} ${item.name} [${rar}]`, isLeg||isChrom||isSecret ? 'legendary' : 'gold');
-    document.getElementById('popup-emoji').textContent = item.emoji;
-    document.getElementById('popup-title').textContent = 'Pro-Drop!';
-    document.getElementById('popup-sub').textContent = `${item.name} — ${rar.toUpperCase()}`;
-    document.getElementById('drop-list').innerHTML = dropItemHTML(item, 0);
-    showPopup(isSecret ? 'secret-flash' : isChrom ? 'chromatic-flash' : isLeg ? 'legendary-flash' : '');
+
+  const ps = proDropState;
+  const rar = PD_RARITY_NAMES[ps.rarIdx];
+  const rewardTable = PRO_DROP_REWARDS[rar];
+  const picked = ps._pickedReward || (rewardTable ? rewardTable.options[Math.floor(Math.random() * rewardTable.options.length)] : null);
+
+  let resultText = '???';
+  if (picked) {
+    resultText = picked.fn();
   }
+
+  const isSecret = rar === 'secret', isChrom = rar === 'chromatic', isLeg = rar === 'legendary';
+  if (isSecret) toast('⬛ SECRET DROP!!!', 'secret');
+  else if (isChrom) toast('🌈 CHROMATIC DROP!!!', 'chrom');
+  else if (isLeg) toast('⭐ LEGENDARY DROP!', 'gold');
+  else toast(`${picked ? picked.emoji : '🎁'} ${resultText} erhalten!`, 'good');
+
+  addLog(`🎰 Pro-Drop [${rar.toUpperCase()}]: ${resultText}`, isLeg||isChrom||isSecret ? 'legendary' : 'gold');
+
+  document.getElementById('popup-emoji').textContent = picked ? picked.emoji : '🎁';
+  document.getElementById('popup-title').textContent = 'Pro-Drop!';
+  document.getElementById('popup-sub').textContent = `${resultText} — ${rar.toUpperCase()}`;
+  document.getElementById('drop-list').innerHTML = `<div class="drop-item rarity-${rar}"><div class="d-emoji">${picked ? picked.emoji : '🎁'}</div><div class="d-info"><div class="d-name">${resultText}</div><div class="d-rarity rarity-text-${rar}">${rar.toUpperCase()}</div></div></div>`;
+  showPopup(isSecret ? 'secret-flash' : isChrom ? 'chromatic-flash' : isLeg ? 'legendary-flash' : '');
+
   checkAchievements(); save(); renderAll();
   closeProDrop();
 }
