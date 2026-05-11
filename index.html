@@ -595,6 +595,153 @@
   .pass-connector { position:absolute; top:50%; left:65px; right:-65px; height:2px; background:var(--border); z-index:0; transform:translateY(-50%); }
   .pass-connector.done { background:linear-gradient(90deg,#7b2fff,#c040f080); }
 
+  /* ===== HOME SCREEN ===== */
+  #section-home .home-hero {
+    background: linear-gradient(135deg,#1a0f14,#0d0508,#1a0f14);
+    border: 1px solid var(--border); border-radius: 16px; padding: 28px 20px;
+    text-align: center; margin-bottom: 20px; position: relative; overflow: hidden;
+  }
+  #section-home .home-hero::before {
+    content:''; position:absolute; inset:0;
+    background: radial-gradient(ellipse at 50% 0%, #f0c04018 0%, transparent 60%);
+  }
+  .home-hero-logo { font-family:'Cinzel Decorative',serif; font-size:2rem;
+    background:linear-gradient(135deg,#f0c040,#ff9010,#f0c040);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 0 12px #f0c04055); margin-bottom:6px; }
+  .home-hero-sub { color:var(--text-dim); font-size:0.9rem; margin-bottom:20px; }
+  .home-quickstats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+  .home-qs { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:12px 8px; text-align:center; }
+  .home-qs-val { font-family:'Cinzel Decorative',serif; font-size:1.1rem; color:var(--gold); }
+  .home-qs-lbl { font-size:0.62rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+  .home-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  @media(max-width:500px) { .home-actions { grid-template-columns:1fr 1fr; } }
+  .home-action-btn {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:18px 14px; text-align:center; cursor:pointer; transition:all 0.25s;
+    position:relative; overflow:hidden;
+  }
+  .home-action-btn:hover { transform:translateY(-3px); border-color:var(--gold-dark); }
+  .home-action-btn .ha-emoji { font-size:2rem; display:block; margin-bottom:6px; }
+  .home-action-btn .ha-name { font-size:0.85rem; font-weight:700; }
+  .home-action-btn .ha-sub  { font-size:0.7rem; color:var(--text-dim); margin-top:2px; }
+  .home-action-btn.ha-pro { border-color:#f0c04060; --bx-glow:#f0c04025; }
+  .home-action-btn.ha-pro::before { content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 0%,#f0c04020,transparent 60%); }
+  .home-notification { background:var(--bg3); border:1px solid #44dd8840; border-radius:10px;
+    padding:10px 14px; margin-bottom:10px; display:flex; align-items:center; gap:10px;
+    font-size:0.82rem; cursor:pointer; transition:all 0.2s; }
+  .home-notification:hover { border-color:#44dd8870; }
+  .home-section-label { font-family:'Cinzel Decorative',serif; font-size:0.75rem; color:var(--gold);
+    letter-spacing:2px; text-transform:uppercase; margin:16px 0 8px; }
+
+  /* ===== SIMPLIFIED TABS ===== */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: visible; }
+  .tab-group { position: relative; }
+  .tab-group-btn {
+    padding: 12px 14px; cursor: pointer; border-bottom: 3px solid transparent;
+    color: var(--text-dim); font-size: 0.95rem; transition: all 0.2s; white-space: nowrap;
+    background: none; border-top:none; border-left:none; border-right:none;
+    font-family: 'Crimson Pro', serif; display:flex; align-items:center; gap:4px;
+  }
+  .tab-group-btn:hover { color: var(--text); }
+  .tab-group-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-group-btn .tg-arrow { font-size:0.65rem; opacity:0.6; transition: transform 0.2s; }
+  .tab-group-btn.open .tg-arrow { transform: rotate(180deg); }
+  .tab-dropdown {
+    position:fixed; background:var(--bg2);
+    border:1px solid var(--border); border-radius:10px; min-width:170px;
+    z-index:500; display:none; flex-direction:column; box-shadow:0 8px 30px #00000099;
+  }
+  .tab-dropdown.open { display:flex; }
+  .tab-dropdown .tab {
+    border-bottom: 1px solid var(--border); border-radius:0; text-align:left;
+    padding:11px 18px; font-size:0.9rem; border-left:none; border-right:none; border-top:none;
+    border-bottom-color: var(--border) !important; color:var(--text-dim);
+  }
+  .tab-dropdown .tab:first-child { border-radius:10px 10px 0 0; }
+  .tab-dropdown .tab:last-child { border-bottom:none !important; border-radius:0 0 10px 10px; }
+  .tab-dropdown .tab.active { color:var(--gold); background:#f0c04010; }
+  .tab-dropdown .tab:hover { color:var(--text); background:var(--bg3); }
+
+  /* ===== PRO-DROP SYSTEM ===== */
+  @keyframes pro-drop-spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+  @keyframes pro-drop-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  @keyframes rarity-reveal { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
+  @keyframes click-ripple { from{transform:scale(0);opacity:0.6} to{transform:scale(3);opacity:0} }
+
+  .pro-drop-overlay {
+    position:fixed; inset:0; background:#000000d0; backdrop-filter:blur(8px);
+    z-index:3000; display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+  }
+  .pro-drop-overlay.visible { opacity:1; pointer-events:all; }
+  .pro-drop-box {
+    background:var(--bg2); border:2px solid var(--border); border-radius:20px;
+    padding:28px 24px; max-width:380px; width:92%; text-align:center;
+    position:relative; overflow:hidden;
+  }
+  .pro-drop-title { font-family:'Cinzel Decorative',serif; font-size:1.1rem; color:var(--gold); margin-bottom:4px; }
+  .pro-drop-subtitle { font-size:0.78rem; color:var(--text-dim); margin-bottom:20px; }
+
+  .pro-drop-gem {
+    width:130px; height:130px; margin:0 auto 18px; position:relative; cursor:pointer;
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:4rem; transition:transform 0.15s;
+    background: radial-gradient(circle at 35% 35%, #3a2040, #0a0608);
+    border: 3px solid var(--drop-color, #5588ff);
+    box-shadow: 0 0 20px var(--drop-color, #5588ff44);
+    user-select:none;
+  }
+  .pro-drop-gem:active { transform:scale(0.93); }
+  .pro-drop-gem.shaking { animation:pro-drop-shake 0.3s; }
+
+  .pro-drop-rarity-indicator {
+    font-size:1.1rem; font-weight:700; letter-spacing:2px;
+    text-transform:uppercase; margin-bottom:8px; min-height:28px;
+    animation:rarity-reveal 0.4s both;
+  }
+  .pro-drop-click-track {
+    display:flex; gap:6px; justify-content:center; margin-bottom:18px;
+  }
+  .pdc-dot {
+    width:20px; height:20px; border-radius:50%; border:2px solid var(--border);
+    background:var(--bg3); transition:all 0.3s;
+  }
+  .pdc-dot.filled { background:var(--drop-color,#5588ff); border-color:var(--drop-color,#5588ff);
+    box-shadow:0 0 8px var(--drop-color,#5588ff); }
+  .pdc-dot.collect { background:var(--gold); border-color:var(--gold);
+    box-shadow:0 0 12px #f0c040; animation:legendary-glow 1s infinite; }
+
+  .pro-drop-progress-text { font-size:0.8rem; color:var(--text-dim); margin-bottom:16px; }
+
+  .pro-drop-collect-btn {
+    width:100%; padding:14px; background:linear-gradient(135deg,#c89a10,#f0c040,#c89a10);
+    border:none; border-radius:12px; color:#1a0800; font-family:'Cinzel Decorative',serif;
+    font-size:0.95rem; font-weight:700; cursor:pointer; transition:all 0.2s;
+    display:none;
+  }
+  .pro-drop-collect-btn.visible { display:block; animation:drop-in 0.4s both; }
+  .pro-drop-collect-btn:hover { transform:translateY(-2px); box-shadow:var(--glow-gold); }
+
+  .pro-drop-reward-display {
+    background:var(--bg3); border:1px solid var(--border); border-radius:12px;
+    padding:14px; margin-bottom:16px; font-size:0.88rem; display:none;
+  }
+  .pro-drop-reward-display.visible { display:block; animation:drop-in 0.3s both; }
+  .pro-drop-reward-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-dim); margin-bottom:6px; }
+  .pro-drop-reward-value { font-size:1.1rem; font-weight:700; color:var(--gold); }
+
+  /* Rarity color vars */
+  .pdr-common    { --drop-color: #5588ff; }
+  .pdr-uncommon  { --drop-color: #55ddff; }
+  .pdr-rare      { --drop-color: #44dd88; }
+  .pdr-epic      { --drop-color: #cc44ff; }
+  .pdr-mythic    { --drop-color: #ff3333; }
+  .pdr-legendary { --drop-color: #ffdd00; }
+  .pdr-chromatic { --drop-color: #ff8800; border-image:linear-gradient(90deg,#f00,#ff8,#0f8,#08f,#80f) 1!important; }
+  .pdr-secret    { --drop-color: #ffffff; }
+
   /* Reward cards */
   .pass-card {
     width:114px; background:var(--bg3); border:1px solid var(--border);
@@ -712,26 +859,101 @@
 <div class="xp-bar-wrap"><div id="xp-bar"></div></div>
 
 <div class="tabs" id="main-tabs">
-  <button class="tab active" onclick="switchTab('adventure',this)">⚔️ Abenteuer</button>
-  <button class="tab" onclick="switchTab('boxes',this)">📦 Kisten</button>
-  <button class="tab" onclick="switchTab('shop',this)">🛒 Shop</button>
-  <button class="tab" onclick="switchTab('craft',this)">⚒️ Crafting</button>
-  <button class="tab" onclick="switchTab('dealing',this)">🤝 Handel</button>
-  <button class="tab" onclick="switchTab('raids',this)">💀 Raids</button>
-  <button class="tab" onclick="switchTab('relics',this)">🏺 Relikte</button>
-  <button class="tab" onclick="switchTab('auto',this)">🤖 Auto</button>
-  <button class="tab" onclick="switchTab('inventory',this)">🎒 Inventar</button>
-  <button class="tab" onclick="switchTab('quests',this)">📜 Quests</button>
-  <button class="tab" onclick="switchTab('daily',this)">🎁 Täglich</button>
-  <button class="tab" onclick="switchTab('achievements',this)">🏆 Erfolge</button>
-  <button class="tab" onclick="switchTab('log',this)">📋 Log</button>
-  <button class="tab" onclick="switchTab('iap',this)">💳 Shop+</button>
-  <button class="tab" onclick="switchTab('prestige',this)">⭐ Prestige</button>
-  <button class="tab" onclick="switchTab('pass',this)">🎫 Season Pass</button>
+  <button class="tab active" id="tab-home" onclick="switchTab('home',this)">🏠 Start</button>
+  <div class="tab-group">
+    <button class="tab-group-btn" id="tabgrp-explore" onclick="toggleDropdown('dd-explore',this)">⚔️ Erkunden <span class="tg-arrow">▼</span></button>
+    <div class="tab-dropdown" id="dd-explore">
+      <button class="tab" id="tab-adventure" onclick="switchTab('adventure',this)">🗺️ Dungeons</button>
+      <button class="tab" id="tab-auto" onclick="switchTab('auto',this)">🤖 Auto-Erkunden</button>
+      <button class="tab" id="tab-raids" onclick="switchTab('raids',this)">💀 Boss-Raids</button>
+    </div>
+  </div>
+  <div class="tab-group">
+    <button class="tab-group-btn" id="tabgrp-loot" onclick="toggleDropdown('dd-loot',this)">📦 Loot <span class="tg-arrow">▼</span></button>
+    <div class="tab-dropdown" id="dd-loot">
+      <button class="tab" id="tab-boxes" onclick="switchTab('boxes',this)">📦 Kisten öffnen</button>
+      <button class="tab" id="tab-shop" onclick="switchTab('shop',this)">🛒 Shop</button>
+      <button class="tab" id="tab-inventory" onclick="switchTab('inventory',this)">🎒 Inventar</button>
+      <button class="tab" id="tab-craft" onclick="switchTab('craft',this)">⚒️ Crafting</button>
+      <button class="tab" id="tab-dealing" onclick="switchTab('dealing',this)">🤝 Handel</button>
+      <button class="tab" id="tab-relics" onclick="switchTab('relics',this)">🏺 Relikte</button>
+    </div>
+  </div>
+  <div class="tab-group">
+    <button class="tab-group-btn" id="tabgrp-prog" onclick="toggleDropdown('dd-prog',this)">📜 Fortschritt <span class="tg-arrow">▼</span></button>
+    <div class="tab-dropdown" id="dd-prog">
+      <button class="tab" id="tab-quests" onclick="switchTab('quests',this)">📜 Quests</button>
+      <button class="tab" id="tab-daily" onclick="switchTab('daily',this)">🎁 Täglich</button>
+      <button class="tab" id="tab-achievements" onclick="switchTab('achievements',this)">🏆 Erfolge</button>
+      <button class="tab" id="tab-pass" onclick="switchTab('pass',this)">🎫 Season Pass</button>
+      <button class="tab" id="tab-prestige" onclick="switchTab('prestige',this)">⭐ Prestige</button>
+      <button class="tab" id="tab-log" onclick="switchTab('log',this)">📋 Abenteuer-Log</button>
+    </div>
+  </div>
+  <button class="tab" id="tab-iap" onclick="switchTab('iap',this)">💎 Premium</button>
 </div>
 
 <main>
-  <div class="section active" id="section-adventure">
+  <!-- ===== HOME SECTION ===== -->
+  <div class="section active" id="section-home">
+    <div id="home-hero" class="home-hero">
+      <div class="home-hero-logo">⚔️ LootQuest</div>
+      <div class="home-hero-sub">Willkommen zurück, Held!</div>
+      <div class="home-quickstats" id="home-quickstats">
+        <div class="home-qs"><div class="home-qs-val" id="hqs-level">1</div><div class="home-qs-lbl">Level</div></div>
+        <div class="home-qs"><div class="home-qs-val" id="hqs-prestige">0</div><div class="home-qs-lbl">Prestige</div></div>
+        <div class="home-qs"><div class="home-qs-val" id="hqs-runs">0</div><div class="home-qs-lbl">Runs</div></div>
+        <div class="home-qs"><div class="home-qs-val" id="hqs-items">0</div><div class="home-qs-lbl">Items</div></div>
+      </div>
+    </div>
+
+    <div class="home-section-label">⚡ Schnellzugriff</div>
+    <div class="home-actions">
+      <div class="home-action-btn" onclick="switchTabById('adventure')">
+        <span class="ha-emoji">🗺️</span>
+        <div class="ha-name">Dungeons</div>
+        <div class="ha-sub">Erkunden &amp; kämpfen</div>
+      </div>
+      <div class="home-action-btn" onclick="switchTabById('raids')">
+        <span class="ha-emoji">💀</span>
+        <div class="ha-name">Boss-Raids</div>
+        <div class="ha-sub">Bosse besiegen</div>
+      </div>
+      <div class="home-action-btn" onclick="switchTabById('boxes')">
+        <span class="ha-emoji">📦</span>
+        <div class="ha-name">Kisten</div>
+        <div class="ha-sub">Loot öffnen</div>
+      </div>
+      <div class="home-action-btn ha-pro" id="home-pro-drop-btn" onclick="openProDrop()">
+        <span class="ha-emoji">🎰</span>
+        <div class="ha-name">Pro-Drop</div>
+        <div class="ha-sub" id="home-prodrop-sub">Öffne einen Drop!</div>
+      </div>
+      <div class="home-action-btn" onclick="switchTabById('quests')">
+        <span class="ha-emoji">📜</span>
+        <div class="ha-name">Quests</div>
+        <div class="ha-sub" id="home-quest-sub">Missionen</div>
+      </div>
+      <div class="home-action-btn" onclick="switchTabById('inventory')">
+        <span class="ha-emoji">🎒</span>
+        <div class="ha-name">Inventar</div>
+        <div class="ha-sub" id="home-inv-sub">Items verwalten</div>
+      </div>
+    </div>
+
+    <div class="home-section-label" id="home-notif-label" style="display:none">🔔 Benachrichtigungen</div>
+    <div id="home-notifications"></div>
+
+    <div class="home-section-label">📊 Heutiger Fortschritt</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="h-stat-runs">0</div><div class="stat-lbl">Runs</div></div>
+      <div class="stat-card"><div class="stat-val" id="h-stat-kills">0</div><div class="stat-lbl">Gegner</div></div>
+      <div class="stat-card"><div class="stat-val" id="h-stat-items">0</div><div class="stat-lbl">Items</div></div>
+      <div class="stat-card"><div class="stat-val" id="h-stat-power">0</div><div class="stat-lbl">Macht</div></div>
+    </div>
+  </div>
+
+  <div class="section" id="section-adventure">
     <div class="section-header">
       <span class="section-title">Dungeons</span>
       <span class="badge">⚔️ Macht: <span id="power-val">0</span></span>
@@ -943,6 +1165,25 @@
     </div>
   </div>
 </main>
+
+
+<!-- PRO-DROP OVERLAY -->
+<div class="pro-drop-overlay" id="pro-drop-overlay" onclick="if(event.target===this)closeProDrop()">
+  <div class="pro-drop-box">
+    <div class="pro-drop-title">🎰 Pro-Drop</div>
+    <div class="pro-drop-subtitle">1 💎 Gem — Klicke auf den Stein!</div>
+    <div class="pro-drop-rarity-indicator" id="pd-rarity-indicator"></div>
+    <div class="pro-drop-gem" id="pd-gem" onclick="pdGemClick()">❓</div>
+    <div class="pro-drop-click-track" id="pd-click-track"></div>
+    <div class="pro-drop-progress-text" id="pd-progress-text">Noch ? Klicks</div>
+    <div class="pro-drop-reward-display" id="pd-reward-display">
+      <div class="pro-drop-reward-label">Dein Drop</div>
+      <div class="pro-drop-reward-value" id="pd-reward-value">???</div>
+    </div>
+    <button class="pro-drop-collect-btn" id="pd-collect-btn" onclick="pdCollect()">✨ Einsammeln!</button>
+    <button class="deal-refresh-btn" style="margin-top:10px;width:100%" onclick="closeProDrop()">✖ Abbrechen</button>
+  </div>
+</div>
 
 <div id="popup-overlay" onclick="closePopup(event)">
   <div id="popup-box">
@@ -1406,6 +1647,7 @@ function showLoginScreen() {
 }
 function hideLoginScreen() {
   document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-tabs').style.display='';
 }
 
 // ============================================================
@@ -1535,7 +1777,6 @@ function changeGameMode(mode) {
   applyGameMode();
   // Reset if switching to hardcore or speedrun
   if(mode==='hardcore'||mode==='speedrun') {
-    const oldMode=mode;
     state = { gold:50, gems:5, dust:0, xp:0, level:1, prestige:0, inventory:[], stats:{runs:0,kills:0,items:0,prestiges:0}, cooldowns:{}, quests:[], dailyQuests:[], lastDailyReset:0, lastLoginDate:'', loginStreak:0, unlockedDungeons:['forest'], gameMode:mode, settings:oldSettings };
     if(mode==='speedrun') state.speedrunStart = Date.now();
     initQuests(); initDailyQuests(); initBosses();
@@ -1692,8 +1933,8 @@ function exploreDungeon(idx) {
   document.getElementById('popup-emoji').textContent=d.emoji;
   document.getElementById('popup-title').textContent=`${d.name} erkundet!`;
   document.getElementById('popup-sub').textContent=`+${fmt(gold)} 🪙  |  +${fmt(d.xp)} XP  |  +${dustGain} ✨`;
-  document.getElementById('drop-list').innerHTML=drops.map((it,i)=>dropItemHTML(it,i)).join('');
-  const hs=drops.some(x=>x.rarity==='secret'),hc=drops.some(x=>x.rarity==='chromatic'),hl=drops.some(x=>x.rarity==='legendary');
+  document.getElementById('drop-list').innerHTML=drops.filter(Boolean).map((it,i)=>dropItemHTML(it,i)).join('');
+  const hs=drops.some(x=>x&&x.rarity==='secret'),hc=drops.some(x=>x&&x.rarity==='chromatic'),hl=drops.some(x=>x&&x.rarity==='legendary');
   showPopup(hs?'secret-flash':hc?'chromatic-flash':hl?'legendary-flash':'');
   if(hs) toast('⬛ SECRET DROP!!!','secret');
   else if(hc) toast('🌈 CHROMATIC DROP!!!','chrom');
@@ -1708,11 +1949,11 @@ function openBox(idx) {
   const n=3+(Math.random()<0.3?1:0)+(Math.random()<0.1?1:0);
   const drops=[];
   for(let i=0;i<n;i++){const id=rollDrop(b.drops,b.rates);addItem(id);drops.push(ITEMS.find(it=>it.id===id));}
-  const hs=drops.some(x=>x.rarity==='secret'),hc=drops.some(x=>x.rarity==='chromatic'),hl=drops.some(x=>x.rarity==='legendary');
+  const hs=drops.some(x=>x&&x.rarity==='secret'),hc=drops.some(x=>x&&x.rarity==='chromatic'),hl=drops.some(x=>x&&x.rarity==='legendary');
   document.getElementById('popup-emoji').textContent=b.id==='secret_box'?'🖤':b.emoji;
   document.getElementById('popup-title').textContent=`${b.name} geöffnet!`;
   document.getElementById('popup-sub').textContent=`${n} Items erhalten!`;
-  document.getElementById('drop-list').innerHTML=drops.map((it,i)=>dropItemHTML(it,i)).join('');
+  document.getElementById('drop-list').innerHTML=drops.filter(Boolean).map((it,i)=>dropItemHTML(it,i)).join('');
   showPopup(hs?'secret-flash':hc?'chromatic-flash':hl?'legendary-flash':'');
   if(hs) toast('⬛ SECRET ITEM!!!','secret');
   else if(hc) toast('🌈 CHROMATIC ITEM!!!','chrom');
@@ -2180,7 +2421,7 @@ function postDeal() {
   const now = Date.now();
   const wantItem = ITEMS.find(i=>i.id===wantId);
   const wantQty = Math.max(1, Math.floor(giveQty * 0.8));
-  const deal = { id:'my_'+now, giveId, giveQty, wantId, wantQty:1, poster:'Du', expiresAt:now+30*60*1000, mine:true };
+  const deal = { id:'my_'+now, giveId, giveQty, wantId, wantQty, poster:'Du', expiresAt:now+30*60*1000, mine:true };
   dealOffers.push(deal);
   myDeals.push(deal.id);
   toast('✅ Angebot eingestellt!','good');
@@ -2583,7 +2824,7 @@ function doAutoRun(dungeonId) {
   const n = 1+(Math.random()<0.4?1:0);
   const drops = [];
   for(let i=0;i<n;i++){const id=rollDrop(d.drops,d.rates);addItem(id);drops.push(ITEMS.find(it=>it.id===id));}
-  const best = drops.reduce((b,x)=>(RARITY_ORDER[x?.rarity||'common']||0)>(RARITY_ORDER[b?.rarity||'common']||0)?x:b, drops[0]);
+  const best = drops.filter(Boolean).reduce((b,x)=>(RARITY_ORDER[x?.rarity||'common']||0)>(RARITY_ORDER[b?.rarity||'common']||0)?x:b, drops.find(Boolean)||drops[0]);
   const isRare = best && ['epic','mythic','legendary','chromatic','secret'].includes(best.rarity);
   autoLogLine(`+${fmt(gold)}🪙  ${best?best.emoji+' '+best.name:''}`, isRare?'rare':'gold');
   checkDungeonUnlocks(); checkQuests(); checkDailyQuests(); checkAchievements();
@@ -2845,7 +3086,7 @@ function renderAll() {
   renderQuests(); renderPrestige(); renderLegend(); renderDailySection(); renderIAP();
   renderCraft(); renderDealing(); refreshDealSelects();
   renderRaids(); renderRelics(); renderAchievements(); renderAutoSection(); renderLog();
-  renderPass();
+  renderPass(); renderHome();
 }
 
 // ============================================================
@@ -3064,10 +3305,10 @@ function loadPassState() {
   if(passState.season !== currentSeason) {
     passState = { level:1, xp:0, claimed:[], season:currentSeason };
     // Auto-claim level 1 (free)
-    passState.claimed.push(1);
+    passState.claimed.push('1_free');
     try { localStorage.setItem('lootquest_pass', JSON.stringify(passState)); } catch(e){}
   }
-  if(!passState.claimed.includes(1)) passState.claimed.push(1); // always give level 1
+  if(!passState.claimed.includes('1_free')) passState.claimed.push('1_free'); // always give level 1
 }
 
 function addPassXP(amount) {
@@ -3082,9 +3323,9 @@ function addPassXP(amount) {
       changed = true;
       toast(`🎫 Pass Stufe ${passState.level} erreicht!`, 'gems');
       // Auto-claim free tiers
-      const tier = PASS_TIERS.find(t=>t.level===passState.level);
-      if(tier && tier.free && !passState.claimed.includes(tier.level)) {
-        claimPassTier(tier.level, true);
+      const tier = PASS_TIERS.find(t=>t.level===passState.level && t.free===true);
+      if(tier && !passState.claimed.includes(tier.level+'_free')) {
+        claimPassTier(tier.level, true, true);
       }
     } else break;
   }
@@ -3157,14 +3398,15 @@ function renderPass() {
       return `<div class="pass-card card-${rowType}" style="visibility:hidden;"></div>`;
     }
     const unlocked = passState.level >= tier.level;
-    const claimed  = passState.claimed.includes(tier.level);
+    const claimKey = tier.level + (rowType === 'free' ? '_free' : '_pro');
+    const claimed  = passState.claimed.includes(claimKey);
     const canClaim = unlocked && !claimed;
     let cls = `pass-card card-${rowType}`;
     if(unlocked) cls += ' card-unlocked';
     if(claimed)  cls += ' card-claimed';
     let action = '';
     if(claimed)        action = `<div class="pass-claimed-mark">✅</div>`;
-    else if(canClaim)  action = `<button class="pass-claim-btn ${rowType==='free'?'btn-free':''}" onclick="claimPassTier(${tier.level})">Abholen!</button>`;
+    else if(canClaim)  action = `<button class="pass-claim-btn ${rowType==='free'?'btn-free':''}" onclick="claimPassTier(${tier.level},${rowType==='free'})">Abholen!</button>`;
     else               action = `<div class="pass-locked-mark">🔒</div>`;
     return `<div class="${cls}">
       <div class="pc-label">${rowType==='free'?'FREE':'PRO'}</div>
@@ -3234,11 +3476,175 @@ function closePopup(e) {
 }
 
 // TABS
-function switchTab(id,btn) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('section-'+id).classList.add('active');
-  btn.classList.add('active');
+function closeAllDropdowns() {
+  document.querySelectorAll('.tab-dropdown.open').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.tab-group-btn.open').forEach(b => b.classList.remove('open'));
+}
+
+function toggleDropdown(ddId, btn) {
+  const dd = document.getElementById(ddId);
+  if (!dd) return;
+  const isOpen = dd.classList.contains('open');
+  closeAllDropdowns();
+  if (!isOpen) {
+    // Position the dropdown below the button using fixed coords
+    const rect = btn.getBoundingClientRect();
+    dd.style.top  = rect.bottom + 4 + 'px';
+    dd.style.left = rect.left + 'px';
+    dd.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.tab-group')) closeAllDropdowns();
+});
+
+function switchTab(id, btn) {
+  closeAllDropdowns();
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-group-btn').forEach(t => { t.classList.remove('active'); t.classList.remove('open'); });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+    const grp = btn.closest('.tab-group');
+    if (grp) grp.querySelector('.tab-group-btn')?.classList.add('active');
+  }
+  if (id === 'home') renderHome();
+}
+
+function switchTabById(id) {
+  const btn = document.querySelector('#tab-' + id);
+  switchTab(id, btn || null);
+}
+
+// HOME RENDER
+function renderHome() {
+  const el = id => document.getElementById(id);
+  if (el('hqs-level'))    el('hqs-level').textContent    = state.level;
+  if (el('hqs-prestige')) el('hqs-prestige').textContent = state.prestige;
+  if (el('hqs-runs'))     el('hqs-runs').textContent     = fmt(state.stats.runs);
+  if (el('hqs-items'))    el('hqs-items').textContent    = fmt(state.stats.items);
+  if (el('h-stat-runs'))  el('h-stat-runs').textContent  = fmt(state.stats.runs);
+  if (el('h-stat-kills')) el('h-stat-kills').textContent = fmt(state.stats.kills);
+  if (el('h-stat-items')) el('h-stat-items').textContent = fmt(state.stats.items);
+  if (el('h-stat-power')) el('h-stat-power').textContent = fmt(calcPower());
+
+  const questReady = (state.quests||[]).filter(q => !q.claimed && (state.stats[q.target]||0) >= q.goal).length;
+  const dailyReady = (state.dailyQuests||[]).filter(q => {
+    if (q.claimed) return false;
+    const prog = (state.stats[q.target]||0) - ((state.dailyQuestBaseline||{})[q.target]||0);
+    return prog >= q.goal;
+  }).length;
+
+  const notifs = [];
+  if (questReady > 0) notifs.push({ emoji:'\u{1F4DC}', text:`${questReady} Quest${questReady>1?'s':''} abholbereit!`, tab:'quests' });
+  if (dailyReady > 0) notifs.push({ emoji:'\u{1F381}', text:`${dailyReady} Tages-Quest${dailyReady>1?'s':''} abholbereit!`, tab:'daily' });
+
+  const notifEl = el('home-notifications');
+  const labelEl = el('home-notif-label');
+  if (notifEl) {
+    notifEl.innerHTML = notifs.map(n =>
+      `<div class="home-notification" onclick="switchTabById('${n.tab}')">
+        <span style="font-size:1.4rem">${n.emoji}</span>
+        <span>${n.text}</span>
+        <span style="margin-left:auto;color:var(--gold);font-size:0.8rem">\u2192</span>
+      </div>`).join('');
+  }
+  if (labelEl) labelEl.style.display = notifs.length > 0 ? '' : 'none';
+
+  const questSub = el('home-quest-sub');
+  if (questSub) questSub.textContent = questReady > 0 ? `${questReady} abholbereit!` : 'Missionen';
+
+  const pdSub = el('home-prodrop-sub');
+  if (pdSub) pdSub.textContent = (state.gems||0) >= 1 ? `💎 ${state.gems} Gems verfügbar` : 'Keine Gems';
+  const invSub = el('home-inv-sub');
+  if (invSub) {
+    const total = (state.inventory||[]).reduce((s,i)=>s+i.qty,0);
+    invSub.textContent = total > 0 ? `${fmt(total)} Items` : 'Leer';
+  }
+}
+
+// PRO-DROP
+let proDropState = null;
+
+function openProDrop() {
+  if (!state.gems || state.gems < 1) { toast('Keine Gems für Pro-Drop!', 'bad'); return; }
+  const overlay = document.getElementById('pro-drop-overlay');
+  if (!overlay) { toast('Pro-Drop nicht verfügbar!', 'bad'); return; }
+  const rates = { common:0.30, uncommon:0.25, rare:0.20, epic:0.13, mythic:0.07, legendary:0.03, chromatic:0.015, secret:0.005 };
+  const rar = rollRarity(rates);
+  const pool = ITEMS.filter(i => i.rarity === rar);
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  const clicks = 3 + Math.floor(Math.random() * 4);
+  proDropState = { item, rar, clicks, done: 0, collected: false };
+  const rarColors = { common:'#5588ff', uncommon:'#55ddff', rare:'#44dd88', epic:'#cc44ff', mythic:'#ff3333', legendary:'#ffdd00', chromatic:'#ff8800', secret:'#ffffff' };
+  const col = rarColors[rar] || '#5588ff';
+  const ri = document.getElementById('pd-rarity-indicator');
+  ri.className = `pro-drop-rarity-indicator rarity-text-${rar}`;
+  ri.textContent = rar.toUpperCase();
+  const gem = document.getElementById('pd-gem');
+  gem.style.setProperty('--drop-color', col);
+  gem.className = `pro-drop-gem pdr-${rar}`;
+  gem.textContent = item ? item.emoji : '\u2753';
+  document.getElementById('pd-progress-text').textContent = `Noch ${clicks} Klicks`;
+  document.getElementById('pd-collect-btn').classList.remove('visible');
+  document.getElementById('pd-reward-display').classList.remove('visible');
+  document.getElementById('pd-click-track').innerHTML = Array.from({length: clicks}, () => `<div class="pdc-dot"></div>`).join('');
+  overlay.classList.add('visible');
+}
+
+function pdGemClick() {
+  if (!proDropState || proDropState.collected) return;
+  const ps = proDropState;
+  if (ps.done >= ps.clicks) return;
+  ps.done++;
+  const dots = document.querySelectorAll('#pd-click-track .pdc-dot');
+  if (dots[ps.done - 1]) dots[ps.done - 1].classList.add('filled');
+  const remaining = ps.clicks - ps.done;
+  document.getElementById('pd-progress-text').textContent = remaining > 0 ? `Noch ${remaining} Klicks` : 'Jetzt einsammeln!';
+  const gem = document.getElementById('pd-gem');
+  gem.classList.add('shaking');
+  setTimeout(() => gem.classList.remove('shaking'), 300);
+  if (ps.done >= ps.clicks) {
+    dots.forEach(d => d.classList.add('collect'));
+    document.getElementById('pd-collect-btn').classList.add('visible');
+    const rewardEl = document.getElementById('pd-reward-display');
+    rewardEl.classList.add('visible');
+    document.getElementById('pd-reward-value').textContent = ps.item ? `${ps.item.emoji} ${ps.item.name} [${ps.rar}]` : '???';
+  }
+}
+
+function pdCollect() {
+  if (!proDropState || proDropState.collected || proDropState.done < proDropState.clicks) return;
+  proDropState.collected = true;
+  if (state.gems < 1) { toast('Keine Gems!', 'bad'); closeProDrop(); return; }
+  state.gems -= 1;
+  const { item, rar } = proDropState;
+  if (item) {
+    addItem(item.id, 1);
+    const isSecret = rar==='secret', isChrom = rar==='chromatic', isLeg = rar==='legendary';
+    if (isSecret) toast('\u2b1b SECRET DROP!!!', 'secret');
+    else if (isChrom) toast('\u{1F308} CHROMATIC DROP!!!', 'chrom');
+    else if (isLeg) toast('\u2b50 LEGENDARY DROP!', 'gold');
+    else toast(`${item.emoji} ${item.name} erhalten!`, 'good');
+    addLog(`\u{1F3B0} Pro-Drop: ${item.emoji} ${item.name} [${rar}]`, isLeg||isChrom||isSecret ? 'legendary' : 'gold');
+    document.getElementById('popup-emoji').textContent = item.emoji;
+    document.getElementById('popup-title').textContent = 'Pro-Drop!';
+    document.getElementById('popup-sub').textContent = `${item.name} — ${rar.toUpperCase()}`;
+    document.getElementById('drop-list').innerHTML = dropItemHTML(item, 0);
+    showPopup(isSecret ? 'secret-flash' : isChrom ? 'chromatic-flash' : isLeg ? 'legendary-flash' : '');
+  }
+  checkAchievements(); save(); renderAll();
+  closeProDrop();
+}
+
+function closeProDrop() {
+  const ov = document.getElementById('pro-drop-overlay');
+  if (ov) ov.classList.remove('visible');
+  proDropState = null;
 }
 
 // TOAST
