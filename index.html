@@ -3633,14 +3633,13 @@ function pdRarEmoji(rar) {
 
 function pdRollTarget() {
   const r = Math.random();
-  if (r < 0.40) return 2; // rare      40%
-  if (r < 0.65) return 3; // epic      25%
-  if (r < 0.82) return 4; // mythic    17%
-  if (r < 0.93) return 5; // legendary 11%
-  if (r < 0.98) return 6; // chromatic  5%
-  return 7;               // secret     2%
+  if (r < 0.40) return 2; // rare      35%
+  if (r < 0.70) return 3; // epic      25%
+  if (r < 0.80) return 4; // mythic    16%
+  if (r < 0.88) return 5; // legendary 12%
+  if (r < 0.97) return 6; // chromatic  7%
+  return 7;               // secret     5%
 }
-
 function openProDrop() {
   if (!state.gems || state.gems < 1) { toast('Keine Gems für Pro-Drop!', 'bad'); return; }
   const overlay = document.getElementById('pro-drop-overlay');
