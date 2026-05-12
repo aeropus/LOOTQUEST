@@ -3716,8 +3716,8 @@ function pdGemClick() {
 function pdCollect() {
   if (!proDropState || proDropState.collected || proDropState.done < proDropState.clicks) return;
   proDropState.collected = true;
-  if (state.gems < 1) { toast('Keine Gems!', 'bad'); closeProDrop(); return; }
-  state.gems -= 1;
+  if (state.gems < 10) { toast('Keine Gems!', 'bad'); closeProDrop(); return; }
+  state.gems -= 10;
 
   const ps = proDropState;
   const rar = PD_RARITY_NAMES[ps.rarIdx];
